@@ -22,11 +22,11 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(path: "../swift-tree-primitives"),
-        .package(path: "../swift-dictionary-primitives"),
-        .package(path: "../swift-stack-primitives"),
-        .package(path: "../swift-queue-primitives"),
-        .package(path: "../swift-buffer-arena-primitives"),
+        .package(url: "https://github.com/swift-primitives/swift-tree-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-dictionary-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-stack-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-queue-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-buffer-arena-primitives.git", branch: "main"),
     ],
     targets: [
 
