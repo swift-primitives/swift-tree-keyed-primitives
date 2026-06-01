@@ -9,7 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Dynamic_Primitives
+public import Buffer_Arena_Primitive
+public import Dictionary_Ordered_Primitives
+public import Queue_Primitives
 
 // MARK: - Key Path Operations
 

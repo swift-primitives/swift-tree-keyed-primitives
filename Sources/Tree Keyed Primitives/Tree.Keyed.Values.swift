@@ -9,6 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Buffer_Arena_Primitive
+public import Dictionary_Ordered_Primitives
+
 // MARK: - Values Along Key Path
 
 extension Tree.Keyed where Element: Copyable {

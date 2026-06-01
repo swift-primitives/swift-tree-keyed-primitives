@@ -9,7 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Dynamic_Primitives
+public import Buffer_Arena_Primitive
+public import Queue_Primitives
+public import Stack_Primitive
 internal import Stack_Primitives
 
 extension Tree.Keyed.Order.Post {

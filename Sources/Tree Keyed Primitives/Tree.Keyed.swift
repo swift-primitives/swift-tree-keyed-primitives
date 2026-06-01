@@ -9,10 +9,12 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Buffer_Arena_Primitive
 public import Buffer_Arena_Primitives
+public import Dictionary_Ordered_Primitives
 public import Dictionary_Primitives
-public import Queue_Dynamic_Primitives
-public import Queue_Primitives_Core
+public import Queue_Primitives
+public import Stack_Primitive
 public import Stack_Primitives
 
 /// A dynamically-growing keyed tree with dictionary-indexed children.

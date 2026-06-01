@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Dynamic_Primitives
+public import Queue_Primitives
 
 // MARK: - Subscript (Read-Only)
 

@@ -24,6 +24,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/swift-primitives/swift-tree-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-dictionary-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-dictionary-ordered-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-stack-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-queue-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-buffer-arena-primitives.git", branch: "main"),
@@ -36,9 +37,11 @@ let package = Package(
             dependencies: [
                 .product(name: "Tree Primitives Core", package: "swift-tree-primitives"),
                 .product(name: "Dictionary Primitives", package: "swift-dictionary-primitives"),
+                .product(name: "Dictionary Ordered Primitives", package: "swift-dictionary-ordered-primitives"),
+                .product(name: "Stack Primitive", package: "swift-stack-primitives"),
                 .product(name: "Stack Primitives", package: "swift-stack-primitives"),
-                .product(name: "Queue Primitives Core", package: "swift-queue-primitives"),
-                .product(name: "Queue Dynamic Primitives", package: "swift-queue-primitives"),
+                .product(name: "Queue Primitives", package: "swift-queue-primitives"),
+                .product(name: "Buffer Arena Primitive", package: "swift-buffer-arena-primitives"),
                 .product(name: "Buffer Arena Primitives", package: "swift-buffer-arena-primitives"),
             ]
         ),
