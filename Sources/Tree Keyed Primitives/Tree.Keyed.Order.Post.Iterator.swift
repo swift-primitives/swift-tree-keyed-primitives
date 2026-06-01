@@ -10,9 +10,10 @@
 // ===----------------------------------------------------------------------===//
 
 public import Buffer_Arena_Primitive
-public import Queue_Primitives
 public import Stack_Primitive
 internal import Stack_Primitives
+internal import Iterator_Primitive
+internal import Iterator_Protocol
 
 extension Tree.Keyed.Order.Post {
 
@@ -20,15 +21,12 @@ extension Tree.Keyed.Order.Post {
     ///
     /// Uses a two-stack approach: first builds reverse post-order via pre-order,
     /// then yields values in the correct order.
-    public struct Iterator: Sequence_Primitives.Sequence.Iterator.`Protocol`, IteratorProtocol {
+    public struct Iterator: Iterator_Primitive.Iterator.`Protocol` {
         @usableFromInline
         let tree: Tree<Element>.Keyed<Key>
 
         @usableFromInline
         var output: Stack<Index<Tree<Element>.Keyed<Key>.Node>>
-
-        @usableFromInline
-        var _element: Element? = nil
 
         init(tree: Tree<Element>.Keyed<Key>) {
             self.tree = tree
@@ -49,27 +47,6 @@ extension Tree.Keyed.Order.Post {
                     pending.push(childIndex)
                 }
             }
-        }
-
-        @_lifetime(&self)
-        @inlinable
-        public mutating func nextSpan(maximumCount: Cardinal) -> Span<Element> {
-            let ptr = unsafe withUnsafeMutablePointer(to: &_element) { p in
-                unsafe UnsafePointer<Element>(
-                    unsafe UnsafeRawPointer(p).assumingMemoryBound(to: Element.self)
-                )
-            }
-            guard maximumCount > .zero else {
-                let span = unsafe Span(_unsafeStart: ptr, count: 0)
-                return unsafe _overrideLifetime(span, mutating: &self)
-            }
-            guard let value = next() else {
-                let span = unsafe Span(_unsafeStart: ptr, count: 0)
-                return unsafe _overrideLifetime(span, mutating: &self)
-            }
-            _element = value
-            let span = unsafe Span(_unsafeStart: ptr, count: 1)
-            return unsafe _overrideLifetime(span, mutating: &self)
         }
 
         @inlinable

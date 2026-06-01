@@ -28,6 +28,8 @@ let package = Package(
         .package(url: "https://github.com/swift-primitives/swift-stack-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-queue-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-buffer-arena-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-iterator-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-sequence-primitives.git", branch: "main"),
     ],
     targets: [
 
@@ -43,6 +45,10 @@ let package = Package(
                 .product(name: "Queue Primitives", package: "swift-queue-primitives"),
                 .product(name: "Buffer Arena Primitive", package: "swift-buffer-arena-primitives"),
                 .product(name: "Buffer Arena Primitives", package: "swift-buffer-arena-primitives"),
+                .product(name: "Iterator Protocol", package: "swift-iterator-primitives"),
+                .product(name: "Iterator Chunk Primitives", package: "swift-iterator-primitives"),
+                .product(name: "Iterable", package: "swift-iterator-primitives"),
+                .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
             ]
         ),
 

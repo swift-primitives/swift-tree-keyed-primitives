@@ -9,16 +9,49 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Iterable
+public import Iterator_Primitive
+public import Iterator_Chunk_Primitives
+public import Sequence_Primitives
+
 extension Tree.Keyed.Order.Post {
 
     /// A sequence that yields values in post-order traversal.
     ///
     /// Post-order traversal visits children in insertion order, then the root.
-    public struct Sequence: Swift.Sequence {
+    public struct Sequence {
         let tree: Tree<Element>.Keyed<Key>
+    }
+}
 
-        public func makeIterator() -> Iterator {
-            Iterator(tree: tree)
-        }
+// MARK: - Iterable (multipass, borrowing)
+//
+// Both `Iterable` and `Sequenceable` declare `associatedtype Iterator`, which Swift unifies; the
+// dual conformer splits the two bindings with `@_implements`. The scalar iterator is the sibling
+// `Tree.Keyed.Order.Post.Iterator` — referenced fully-qualified so the bare name `Iterator` does not
+// resolve to `Self.Iterator` (the associated type being defined).
+
+extension Tree.Keyed.Order.Post.Sequence: Iterable where Element: Copyable {
+    @_implements(Iterable, Iterator)
+    public typealias IterableIterator =
+        Iterator_Primitive.Iterator.Materializing<Tree<Element>.Keyed<Key>.Order.Post.Iterator>
+
+    @_lifetime(borrow self)
+    @_implements(Iterable, makeIterator())
+    public borrowing func iterableMakeIterator()
+        -> Iterator_Primitive.Iterator.Materializing<Tree<Element>.Keyed<Key>.Order.Post.Iterator>
+    {
+        Iterator_Primitive.Iterator.Materializing(Tree<Element>.Keyed<Key>.Order.Post.Iterator(tree: tree))
+    }
+}
+
+// MARK: - Sequenceable (single-pass, consuming)
+
+extension Tree.Keyed.Order.Post.Sequence: Sequenceable where Element: Copyable {
+    @_implements(Sequenceable, Iterator)
+    public typealias SequenceableIterator = Tree<Element>.Keyed<Key>.Order.Post.Iterator
+
+    public consuming func makeIterator() -> Tree<Element>.Keyed<Key>.Order.Post.Iterator {
+        Tree<Element>.Keyed<Key>.Order.Post.Iterator(tree: tree)
     }
 }

@@ -10,6 +10,7 @@
 // ===----------------------------------------------------------------------===//
 
 import Testing
+import Sequence_Primitives
 import Tree_Primitives_Test_Support
 
 @testable import Tree_Keyed_Primitives
@@ -325,21 +326,21 @@ extension TreeKeyedTests.Unit {
     @Test
     func `preOrder sequence produces depth-first root-first values`() throws {
         let tree = try makeTestTree()
-        let result = Swift.Array(tree.preOrder)
+        let result = tree.preOrder.collect()
         #expect(result == [0, 1, 3, 4, 2])
     }
 
     @Test
     func `postOrder sequence produces depth-first children-first values`() throws {
         let tree = try makeTestTree()
-        let result = Swift.Array(tree.postOrder)
+        let result = tree.postOrder.collect()
         #expect(result == [3, 4, 1, 2, 0])
     }
 
     @Test
     func `levelOrder sequence produces breadth-first values`() throws {
         let tree = try makeTestTree()
-        let result = Swift.Array(tree.levelOrder)
+        let result = tree.levelOrder.collect()
         #expect(result == [0, 1, 2, 3, 4])
     }
 
@@ -377,7 +378,7 @@ extension TreeKeyedTests.Unit {
         _ = try tree.insert(3, at: .child(of: root, key: "b"))
 
         let doubled = tree.mapValues { $0 * 2 }
-        #expect(Swift.Array(doubled.preOrder) == [2, 4, 6])
+        #expect(doubled.preOrder.collect() == [2, 4, 6])
     }
 
     @Test
@@ -546,16 +547,16 @@ extension TreeKeyedTests.EdgeCase {
         var count = 0
         tree.forEachPreOrder { _ in count += 1 }
         #expect(count == 0)
-        #expect(Swift.Array(tree.preOrder).isEmpty)
+        #expect(tree.preOrder.collect().isEmpty)
     }
 
     @Test
     func `single node traversal produces one value for all orders`() throws {
         var tree = Tree<Int>.Keyed<String>()
         _ = try tree.insert(42, at: .root)
-        #expect(Swift.Array(tree.preOrder) == [42])
-        #expect(Swift.Array(tree.postOrder) == [42])
-        #expect(Swift.Array(tree.levelOrder) == [42])
+        #expect(tree.preOrder.collect() == [42])
+        #expect(tree.postOrder.collect() == [42])
+        #expect(tree.levelOrder.collect() == [42])
     }
 
     @Test
@@ -681,7 +682,7 @@ extension TreeKeyedTests.Integration {
         _ = try tree.insert(2, at: .child(of: root, key: "b"))
 
         let filtered = tree.compactMapValues { $0 != 1 ? $0 * 10 : nil }
-        #expect(Swift.Array(filtered.preOrder) == [0, 20])
+        #expect(filtered.preOrder.collect() == [0, 20])
     }
 }
 
