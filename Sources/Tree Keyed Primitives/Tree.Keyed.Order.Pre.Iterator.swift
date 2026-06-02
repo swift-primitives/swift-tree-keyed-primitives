@@ -39,12 +39,11 @@ extension Tree.Keyed.Order.Pre {
             guard !pending.isEmpty else { return nil }
 
             let index = pending.pop()!
-            let nodePtr = unsafe tree._arena.pointer(at: index)
-            let value = unsafe nodePtr.pointee.value
+            let value = tree._arena[index].value
 
             // Collect children, push in reverse for correct order
             var childIndices: [Index<Tree<Element>.Keyed<Key>.Node>] = []
-            unsafe nodePtr.pointee._children.forEach { _, childIndex in
+            tree._arena[index]._children.forEach { _, childIndex in
                 childIndices.append(childIndex)
             }
             for i in (0..<childIndices.count).reversed() {

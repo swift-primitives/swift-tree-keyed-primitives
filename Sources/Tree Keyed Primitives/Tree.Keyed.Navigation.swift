@@ -31,8 +31,7 @@ extension Tree.Keyed where Element: ~Copyable {
         } catch {
             return nil
         }
-        let nodePtr = unsafe _arena.pointer(at: _slot(position.index))
-        guard let childIndex = unsafe nodePtr.pointee._children[key] else { return nil }
+        guard let childIndex = _arena[_slot(position.index)]._children[key] else { return nil }
         let token = _arena.token(at: childIndex)
         return Tree.Position(index: childIndex, token: token)
     }
@@ -49,7 +48,7 @@ extension Tree.Keyed where Element: ~Copyable {
         } catch {
             return nil
         }
-        guard let parentIndex = unsafe _arena.pointer(at: _slot(position.index)).pointee.parentIndex else {
+        guard let parentIndex = _arena[_slot(position.index)].parentIndex else {
             return nil
         }
         let token = _arena.token(at: parentIndex)
@@ -67,7 +66,7 @@ extension Tree.Keyed where Element: ~Copyable {
         } catch {
             return nil
         }
-        return unsafe _arena.pointer(at: _slot(position.index)).pointee.parentKey
+        return _arena[_slot(position.index)].parentKey
     }
 
     /// Returns whether the node at the given position is a leaf (has no children).
@@ -82,7 +81,7 @@ extension Tree.Keyed where Element: ~Copyable {
         } catch {
             return false
         }
-        return unsafe _arena.pointer(at: _slot(position.index)).pointee._children.isEmpty
+        return _arena[_slot(position.index)]._children.isEmpty
     }
 
     /// Returns the number of children of the node at the given position.
@@ -96,7 +95,7 @@ extension Tree.Keyed where Element: ~Copyable {
         } catch {
             return nil
         }
-        return unsafe _arena.pointer(at: _slot(position.index)).pointee._children.count.retag(Node.self)
+        return _arena[_slot(position.index)]._children.count.retag(Node.self)
     }
 
     /// Returns the keys and positions of all children of the node at the given position.
@@ -116,8 +115,7 @@ extension Tree.Keyed where Element: ~Copyable {
             return nil
         }
         var result: [(key: Key, position: Tree.Position)] = []
-        let nodePtr = unsafe _arena.pointer(at: _slot(position.index))
-        unsafe nodePtr.pointee._children.forEach { key, childIndex in
+        _arena[_slot(position.index)]._children.forEach { key, childIndex in
             let token = _arena.token(at: childIndex)
             result.append((key, Tree.Position(index: childIndex, token: token)))
         }
@@ -141,8 +139,7 @@ extension Tree.Keyed where Element: ~Copyable {
         } catch {
             return
         }
-        let nodePtr = unsafe _arena.pointer(at: _slot(position.index))
-        unsafe nodePtr.pointee._children.forEach { key, childIndex in
+        _arena[_slot(position.index)]._children.forEach { key, childIndex in
             let token = _arena.token(at: childIndex)
             body(key, Tree.Position(index: childIndex, token: token))
         }

@@ -42,8 +42,7 @@ extension Tree.Keyed.Order.Post {
                 let index = pending.pop()!
                 output.push(index)
 
-                let nodePtr = unsafe tree._arena.pointer(at: index)
-                unsafe nodePtr.pointee._children.forEach { _, childIndex in
+                tree._arena[index]._children.forEach { _, childIndex in
                     pending.push(childIndex)
                 }
             }
@@ -53,8 +52,7 @@ extension Tree.Keyed.Order.Post {
         public mutating func next() -> Element? {
             guard !output.isEmpty else { return nil }
             let index = output.pop()!
-            let nodePtr = unsafe tree._arena.pointer(at: index)
-            return unsafe nodePtr.pointee.value
+            return tree._arena[index].value
         }
     }
 }

@@ -39,10 +39,9 @@ extension Tree.Keyed.Order.Level {
             guard !pending.isEmpty else { return nil }
 
             let index = pending.dequeue()!
-            let nodePtr = unsafe tree._arena.pointer(at: index)
-            let value = unsafe nodePtr.pointee.value
+            let value = tree._arena[index].value
 
-            unsafe nodePtr.pointee._children.forEach { _, childIndex in
+            tree._arena[index]._children.forEach { _, childIndex in
                 pending.enqueue(childIndex)
             }
 
