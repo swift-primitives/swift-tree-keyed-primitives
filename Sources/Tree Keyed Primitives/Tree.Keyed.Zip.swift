@@ -37,12 +37,9 @@ public func zip<Key: Hash.`Protocol`, A, B>(
         return result
     }
 
-    let lhsPtr = unsafe lhs._arena.pointer(at: lhsRoot)
-    let rhsPtr = unsafe rhs._arena.pointer(at: rhsRoot)
-
     let rootPos = result._arena.insert(
         Tree<(A, B)>.Keyed<Key>.Node(
-            value: (unsafe lhsPtr.pointee.value, unsafe rhsPtr.pointee.value)
+            value: (lhs._arena[lhsRoot].value, rhs._arena[rhsRoot].value)
         )
     )
     result._rootIndex = rootPos.slot
@@ -59,25 +56,18 @@ public func zip<Key: Hash.`Protocol`, A, B>(
     while !pending.isEmpty {
         let (lhsIndex, rhsIndex, destParentIndex) = pending.pop()!
 
-        let lhsNodePtr = unsafe lhs._arena.pointer(at: lhsIndex)
-        let rhsNodePtr = unsafe rhs._arena.pointer(at: rhsIndex)
-
         // For each child key in lhs, check if rhs also has it
-        unsafe lhsNodePtr.pointee._children.forEach { key, lhsChildIndex in
-            guard let rhsChildIndex = unsafe rhsNodePtr.pointee._children[key] else { return }
-
-            let lhsChildPtr = unsafe lhs._arena.pointer(at: lhsChildIndex)
-            let rhsChildPtr = unsafe rhs._arena.pointer(at: rhsChildIndex)
+        lhs._arena[lhsIndex]._children.forEach { key, lhsChildIndex in
+            guard let rhsChildIndex = rhs._arena[rhsIndex]._children[key] else { return }
 
             let childPos = result._arena.insert(
                 Tree<(A, B)>.Keyed<Key>.Node(
-                    value: (unsafe lhsChildPtr.pointee.value, unsafe rhsChildPtr.pointee.value),
+                    value: (lhs._arena[lhsChildIndex].value, rhs._arena[rhsChildIndex].value),
                     parentIndex: destParentIndex,
                     parentKey: key
                 )
             )
-            let parentPtr = unsafe result._arena.pointer(at: destParentIndex)
-            unsafe (parentPtr.pointee._children.set(key, childPos.slot))
+            result._arena[destParentIndex]._children.set(key, childPos.slot)
 
             pending.push((lhsChildIndex, rhsChildIndex, childPos.slot))
         }

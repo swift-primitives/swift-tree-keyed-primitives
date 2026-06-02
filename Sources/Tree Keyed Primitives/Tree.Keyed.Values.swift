@@ -43,10 +43,8 @@ extension Tree.Keyed where Element: Copyable {
                 continue
             }
 
-            let nodePtr = unsafe _arena.pointer(at: index)
-            if let childIndex = unsafe nodePtr.pointee._children[key] {
-                let childPtr = unsafe _arena.pointer(at: childIndex)
-                result.append(unsafe childPtr.pointee.value)
+            if let childIndex = _arena[index]._children[key] {
+                result.append(_arena[childIndex].value)
                 currentIndex = childIndex
             } else {
                 result.append(nil)

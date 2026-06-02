@@ -225,17 +225,15 @@ extension Tree.Keyed where Element: ~Copyable {
         case .child(of: let parent, let key):
             try _validate(parent)
             // Check child key is not already occupied
-            let occupied = unsafe _arena.pointer(at: _slot(parent.index)).pointee._children.contains(key)
+            let occupied = _arena[_slot(parent.index)]._children.contains(key)
             guard !occupied else {
                 throw .keyOccupied(key)
             }
-            // Insert (may grow, invalidating previous pointers)
+            // Insert (may grow, invalidating previous slots)
             let arenaPos = _arena.insert(
                 Node(value: value, parentIndex: _slot(parent.index), parentKey: key)
             )
-            // Get fresh pointer after possible growth
-            let parentPtr = unsafe _arena.pointer(at: _slot(parent.index))
-            unsafe (parentPtr.pointee._children.set(key, arenaPos.slot))
+            _arena[_slot(parent.index)]._children.set(key, arenaPos.slot)
             return Tree.Position(index: arenaPos.slot, token: arenaPos.token)
         }
     }
@@ -251,17 +249,15 @@ extension Tree.Keyed where Element: ~Copyable {
     public mutating func remove(at position: Tree.Position) throws(__TreeKeyedError<Key>) -> Value {
         try _validate(position)
 
-        let nodePtr = unsafe _arena.pointer(at: _slot(position.index))
-        guard unsafe nodePtr.pointee._children.isEmpty else {
+        guard _arena[_slot(position.index)]._children.isEmpty else {
             throw .cannotRemoveNonLeaf
         }
 
         // Update parent's child dictionary
-        if let parentIndex = unsafe nodePtr.pointee.parentIndex,
-            let parentKey = unsafe nodePtr.pointee.parentKey
+        if let parentIndex = _arena[_slot(position.index)].parentIndex,
+            let parentKey = _arena[_slot(position.index)].parentKey
         {
-            let parentPtr = unsafe _arena.pointer(at: parentIndex)
-            unsafe (parentPtr.pointee._children.remove(parentKey))
+            _arena[parentIndex]._children.remove(parentKey)
         } else {
             _rootIndex = nil
         }
@@ -282,12 +278,10 @@ extension Tree.Keyed where Element: ~Copyable {
         try _validate(position)
 
         // Update parent's child dictionary
-        let nodePtr = unsafe _arena.pointer(at: _slot(position.index))
-        if let parentIndex = unsafe nodePtr.pointee.parentIndex,
-            let parentKey = unsafe nodePtr.pointee.parentKey
+        if let parentIndex = _arena[_slot(position.index)].parentIndex,
+            let parentKey = _arena[_slot(position.index)].parentKey
         {
-            let parentPtr = unsafe _arena.pointer(at: parentIndex)
-            unsafe (parentPtr.pointee._children.remove(parentKey))
+            _arena[parentIndex]._children.remove(parentKey)
         } else {
             _rootIndex = nil
         }
@@ -303,8 +297,7 @@ extension Tree.Keyed where Element: ~Copyable {
             let current = pending.pop()!
             visited.push(current)
 
-            let currentPtr = unsafe _arena.pointer(at: current)
-            unsafe currentPtr.pointee._children.forEach { _, childIndex in
+            _arena[current]._children.forEach { _, childIndex in
                 pending.push(childIndex)
             }
         }
@@ -329,7 +322,7 @@ extension Tree.Keyed where Element: ~Copyable {
         } catch {
             return nil
         }
-        return unsafe body(_arena.pointer(at: _slot(position.index)).pointee.value)
+        return body(_arena[_slot(position.index)].value)
     }
 
     /// Clears all nodes from the tree.
@@ -357,8 +350,7 @@ extension Tree.Keyed where Element: ~Copyable {
             let (index, depth) = pending.pop()!
             maxHeight = Swift.max(maxHeight, depth)
 
-            let nodePtr = unsafe _arena.pointer(at: index)
-            unsafe nodePtr.pointee._children.forEach { _, childIndex in
+            _arena[index]._children.forEach { _, childIndex in
                 pending.push((childIndex, depth + .one))
             }
         }
@@ -388,14 +380,13 @@ extension Tree.Keyed where Element: Copyable {
     public var rootValue: Value? {
         get {
             guard let rootIndex = _rootIndex else { return nil }
-            return unsafe _arena.pointer(at: rootIndex).pointee.value
+            return _arena[rootIndex].value
         }
         set {
             guard let newValue else { return }
             makeUnique()
             if let rootIndex = _rootIndex {
-                let nodePtr = unsafe _arena.pointer(at: rootIndex)
-                unsafe (nodePtr.pointee.value = newValue)
+                _arena[rootIndex].value = newValue
             } else {
                 let arenaPos = _arena.insert(Node(value: newValue))
                 _rootIndex = arenaPos.slot
@@ -423,15 +414,14 @@ extension Tree.Keyed where Element: Copyable {
 
         case .child(of: let parent, let key):
             try _validate(parent)
-            let occupied = unsafe _arena.pointer(at: _slot(parent.index)).pointee._children.contains(key)
+            let occupied = _arena[_slot(parent.index)]._children.contains(key)
             guard !occupied else {
                 throw .keyOccupied(key)
             }
             let arenaPos = _arena.insert(
                 Node(value: value, parentIndex: _slot(parent.index), parentKey: key)
             )
-            let parentPtr = unsafe _arena.pointer(at: _slot(parent.index))
-            unsafe (parentPtr.pointee._children.set(key, arenaPos.slot))
+            _arena[_slot(parent.index)]._children.set(key, arenaPos.slot)
             return Tree.Position(index: arenaPos.slot, token: arenaPos.token)
         }
     }
@@ -447,7 +437,7 @@ extension Tree.Keyed where Element: Copyable {
         } catch {
             return nil
         }
-        return unsafe _arena.pointer(at: _slot(position.index)).pointee.value
+        return _arena[_slot(position.index)].value
     }
 
     /// Replaces the value at the specified position.
@@ -460,8 +450,7 @@ extension Tree.Keyed where Element: Copyable {
     public mutating func update(at position: Tree.Position, _ newValue: Value) throws(__TreeKeyedError<Key>) {
         makeUnique()
         try _validate(position)
-        let nodePtr = unsafe _arena.pointer(at: _slot(position.index))
-        unsafe (nodePtr.pointee.value = newValue)
+        _arena[_slot(position.index)].value = newValue
     }
 }
 

@@ -33,23 +33,21 @@ extension Tree.Keyed where Element: Copyable {
 
         while !pending.isEmpty {
             let (sourceIndex, destParentIndex, key) = pending.pop()!
-            let sourcePtr = unsafe _arena.pointer(at: sourceIndex)
-            let newValue = transform(unsafe sourcePtr.pointee.value)
+            let newValue = transform(_arena[sourceIndex].value)
 
             let arenaPos = result._arena.insert(
                 Tree<U>.Keyed<Key>.Node(value: newValue, parentIndex: destParentIndex, parentKey: key)
             )
 
             if let destParentIndex {
-                let parentPtr = unsafe result._arena.pointer(at: destParentIndex)
-                unsafe (parentPtr.pointee._children.set(key!, arenaPos.slot))
+                result._arena[destParentIndex]._children.set(key!, arenaPos.slot)
             } else {
                 result._rootIndex = arenaPos.slot
             }
 
             // Collect children in reverse for correct order
             var children: [(key: Key, index: Index<Node>)] = []
-            unsafe sourcePtr.pointee._children.forEach { childKey, childIndex in
+            _arena[sourceIndex]._children.forEach { childKey, childIndex in
                 children.append((childKey, childIndex))
             }
             for i in (0..<children.count).reversed() {
@@ -154,7 +152,6 @@ extension Tree.Keyed where Element: Copyable {
 
         while !pending.isEmpty {
             let (sourceIndex, destParentIndex, key, path, broadcast) = pending.pop()!
-            let sourcePtr = unsafe _arena.pointer(at: sourceIndex)
 
             let newValue: U
             let shouldBroadcast: Bool
@@ -163,7 +160,7 @@ extension Tree.Keyed where Element: Copyable {
                 newValue = broadcastValue
                 shouldBroadcast = true
             } else {
-                guard let transformed = try transform(path, unsafe sourcePtr.pointee.value) else {
+                guard let transformed = try transform(path, _arena[sourceIndex].value) else {
                     continue
                 }
                 newValue = transformed.0
@@ -175,14 +172,13 @@ extension Tree.Keyed where Element: Copyable {
             )
 
             if let destParentIndex {
-                let parentPtr = unsafe result._arena.pointer(at: destParentIndex)
-                unsafe (parentPtr.pointee._children.set(key!, arenaPos.slot))
+                result._arena[destParentIndex]._children.set(key!, arenaPos.slot)
             } else {
                 result._rootIndex = arenaPos.slot
             }
 
             var children: [(key: Key, index: Index<Node>)] = []
-            unsafe sourcePtr.pointee._children.forEach { childKey, childIndex in
+            _arena[sourceIndex]._children.forEach { childKey, childIndex in
                 children.append((childKey, childIndex))
             }
             for i in (0..<children.count).reversed() {
@@ -216,8 +212,7 @@ extension Tree.Keyed where Element: Copyable {
         var result = Tree<U>.Keyed<Key>()
         guard let rootIndex = _rootIndex else { return result }
 
-        let sourcePtr = unsafe _arena.pointer(at: rootIndex)
-        guard let rootValue = transform(unsafe sourcePtr.pointee.value) else { return result }
+        guard let rootValue = transform(_arena[rootIndex].value) else { return result }
 
         let rootPos = result._arena.insert(Tree<U>.Keyed<Key>.Node(value: rootValue))
         result._rootIndex = rootPos.slot
@@ -227,22 +222,19 @@ extension Tree.Keyed where Element: Copyable {
 
         while !pending.isEmpty {
             let (sourceIndex, destParentIndex) = pending.pop()!
-            let sourceNodePtr = unsafe _arena.pointer(at: sourceIndex)
 
             var children: [(key: Key, index: Index<Node>)] = []
-            unsafe sourceNodePtr.pointee._children.forEach { childKey, childIndex in
+            _arena[sourceIndex]._children.forEach { childKey, childIndex in
                 children.append((childKey, childIndex))
             }
 
             for (childKey, childIndex) in children {
-                let childPtr = unsafe _arena.pointer(at: childIndex)
-                guard let childValue = transform(unsafe childPtr.pointee.value) else { continue }
+                guard let childValue = transform(_arena[childIndex].value) else { continue }
 
                 let childPos = result._arena.insert(
                     Tree<U>.Keyed<Key>.Node(value: childValue, parentIndex: destParentIndex, parentKey: childKey)
                 )
-                let parentPtr = unsafe result._arena.pointer(at: destParentIndex)
-                unsafe (parentPtr.pointee._children.set(childKey, childPos.slot))
+                result._arena[destParentIndex]._children.set(childKey, childPos.slot)
 
                 pending.push((childIndex, childPos.slot))
             }
@@ -307,7 +299,6 @@ extension Tree.Keyed where Element: Copyable {
 
         while !pending.isEmpty {
             let (sourceIndex, destParentIndex, key, path, broadcast) = pending.pop()!
-            let sourcePtr = unsafe _arena.pointer(at: sourceIndex)
 
             let newValue: U
             let shouldBroadcast: Bool
@@ -316,7 +307,7 @@ extension Tree.Keyed where Element: Copyable {
                 newValue = broadcastValue
                 shouldBroadcast = true
             } else {
-                guard let transformed = try await transform(path, unsafe sourcePtr.pointee.value) else {
+                guard let transformed = try await transform(path, _arena[sourceIndex].value) else {
                     continue
                 }
                 newValue = transformed.0
@@ -328,14 +319,13 @@ extension Tree.Keyed where Element: Copyable {
             )
 
             if let destParentIndex {
-                let parentPtr = unsafe result._arena.pointer(at: destParentIndex)
-                unsafe (parentPtr.pointee._children.set(key!, arenaPos.slot))
+                result._arena[destParentIndex]._children.set(key!, arenaPos.slot)
             } else {
                 result._rootIndex = arenaPos.slot
             }
 
             var children: [(key: Key, index: Index<Node>)] = []
-            unsafe sourcePtr.pointee._children.forEach { childKey, childIndex in
+            _arena[sourceIndex]._children.forEach { childKey, childIndex in
                 children.append((childKey, childIndex))
             }
             for i in (0..<children.count).reversed() {

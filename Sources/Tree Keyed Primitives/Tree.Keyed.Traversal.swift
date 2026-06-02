@@ -32,12 +32,11 @@ extension Tree.Keyed where Element: ~Copyable {
 
         while !pending.isEmpty {
             let index = pending.pop()!
-            let nodePtr = unsafe _arena.pointer(at: index)
-            unsafe body(nodePtr.pointee.value)
+            body(_arena[index].value)
 
             // Collect children, then push in reverse for correct order
             var childIndices: [Index<Node>] = []
-            unsafe nodePtr.pointee._children.forEach { _, childIndex in
+            _arena[index]._children.forEach { _, childIndex in
                 childIndices.append(childIndex)
             }
             for i in (0..<childIndices.count).reversed() {
@@ -66,9 +65,8 @@ extension Tree.Keyed where Element: ~Copyable {
             let index = pending.pop()!
             output.push(index)
 
-            let nodePtr = unsafe _arena.pointer(at: index)
             // Push children in insertion order (leftmost first) so rightmost ends up on top
-            unsafe nodePtr.pointee._children.forEach { _, childIndex in
+            _arena[index]._children.forEach { _, childIndex in
                 pending.push(childIndex)
             }
         }
@@ -76,8 +74,7 @@ extension Tree.Keyed where Element: ~Copyable {
         // Process in reverse order (post-order)
         while !output.isEmpty {
             let index = output.pop()!
-            let nodePtr = unsafe _arena.pointer(at: index)
-            unsafe body(nodePtr.pointee.value)
+            body(_arena[index].value)
         }
     }
 
@@ -95,11 +92,10 @@ extension Tree.Keyed where Element: ~Copyable {
 
         while !pending.isEmpty {
             let index = pending.dequeue()!
-            let nodePtr = unsafe _arena.pointer(at: index)
 
-            unsafe body(nodePtr.pointee.value)
+            body(_arena[index].value)
 
-            unsafe nodePtr.pointee._children.forEach { _, childIndex in
+            _arena[index]._children.forEach { _, childIndex in
                 pending.enqueue(childIndex)
             }
         }

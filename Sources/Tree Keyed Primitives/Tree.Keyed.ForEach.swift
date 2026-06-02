@@ -36,11 +36,10 @@ extension Tree.Keyed where Element: Copyable {
 
         while !pending.isEmpty {
             let (index, path) = pending.pop()!
-            let nodePtr = unsafe _arena.pointer(at: index)
-            try body(path, unsafe nodePtr.pointee.value)
+            try body(path, _arena[index].value)
 
             var children: [(key: Key, index: Index<Node>)] = []
-            unsafe nodePtr.pointee._children.forEach { key, childIndex in
+            _arena[index]._children.forEach { key, childIndex in
                 children.append((key, childIndex))
             }
             for i in (0..<children.count).reversed() {
@@ -63,11 +62,10 @@ extension Tree.Keyed where Element: Copyable {
 
         while !pending.isEmpty {
             let (index, path) = pending.pop()!
-            let nodePtr = unsafe _arena.pointer(at: index)
-            try await body(path, unsafe nodePtr.pointee.value)
+            try await body(path, _arena[index].value)
 
             var children: [(key: Key, index: Index<Node>)] = []
-            unsafe nodePtr.pointee._children.forEach { key, childIndex in
+            _arena[index]._children.forEach { key, childIndex in
                 children.append((key, childIndex))
             }
             for i in (0..<children.count).reversed() {

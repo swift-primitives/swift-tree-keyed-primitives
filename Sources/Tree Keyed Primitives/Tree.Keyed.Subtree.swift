@@ -38,9 +38,8 @@ extension Tree.Keyed where Element: Copyable {
 
         var result = Tree<Element>.Keyed<Key>()
         let sourceIndex = _slot(pos.index)
-        let sourcePtr = unsafe _arena.pointer(at: sourceIndex)
 
-        let rootPos = result._arena.insert(Node(value: unsafe sourcePtr.pointee.value))
+        let rootPos = result._arena.insert(Node(value: _arena[sourceIndex].value))
         result._rootIndex = rootPos.slot
 
         var pending = Stack<(source: Index<Node>, dest: Index<Node>)>()
@@ -48,20 +47,17 @@ extension Tree.Keyed where Element: Copyable {
 
         while !pending.isEmpty {
             let (srcIdx, dstIdx) = pending.pop()!
-            let srcPtr = unsafe _arena.pointer(at: srcIdx)
 
             var children: [(key: Key, index: Index<Node>)] = []
-            unsafe srcPtr.pointee._children.forEach { key, childIndex in
+            _arena[srcIdx]._children.forEach { key, childIndex in
                 children.append((key, childIndex))
             }
 
             for (childKey, childIndex) in children {
-                let childPtr = unsafe _arena.pointer(at: childIndex)
                 let newChild = result._arena.insert(
-                    Node(value: unsafe childPtr.pointee.value, parentIndex: dstIdx, parentKey: childKey)
+                    Node(value: _arena[childIndex].value, parentIndex: dstIdx, parentKey: childKey)
                 )
-                let destParentPtr = unsafe result._arena.pointer(at: dstIdx)
-                unsafe (destParentPtr.pointee._children.set(childKey, newChild.slot))
+                result._arena[dstIdx]._children.set(childKey, newChild.slot)
                 pending.push((childIndex, newChild.slot))
             }
         }

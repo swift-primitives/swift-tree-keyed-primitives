@@ -36,9 +36,9 @@ extension Tree.Keyed where Element: ~Copyable {
         var path: [Key] = []
         var current = _slot(position.index)
 
-        while let parentKey = unsafe _arena.pointer(at: current).pointee.parentKey {
+        while let parentKey = _arena[current].parentKey {
             path.append(parentKey)
-            guard let parentIndex = unsafe _arena.pointer(at: current).pointee.parentIndex else {
+            guard let parentIndex = _arena[current].parentIndex else {
                 break
             }
             current = parentIndex
@@ -60,8 +60,7 @@ extension Tree.Keyed where Element: ~Copyable {
 
         var current = rootIndex
         for key in keyPath {
-            let nodePtr = unsafe _arena.pointer(at: current)
-            guard let childIndex = unsafe nodePtr.pointee._children[key] else {
+            guard let childIndex = _arena[current]._children[key] else {
                 return nil
             }
             current = childIndex
@@ -135,34 +134,28 @@ extension Tree.Keyed where Element: Copyable {
         // Walk down to the parent of the terminal node, creating intermediates
         for i in keyPath.indices.dropLast() {
             let key = keyPath[i]
-            let nodePtr = unsafe _arena.pointer(at: currentIndex)
-            if let childIndex = unsafe nodePtr.pointee._children[key] {
+            if let childIndex = _arena[currentIndex]._children[key] {
                 currentIndex = childIndex
             } else {
                 let arenaPos = _arena.insert(
                     Node(value: intermediateValue(key), parentIndex: currentIndex, parentKey: key)
                 )
-                let parentPtr = unsafe _arena.pointer(at: currentIndex)
-                unsafe (parentPtr.pointee._children.set(key, arenaPos.slot))
+                _arena[currentIndex]._children.set(key, arenaPos.slot)
                 currentIndex = arenaPos.slot
             }
         }
 
         // Insert or update terminal node
         let terminalKey = keyPath.last!
-        let parentPtr = unsafe _arena.pointer(at: currentIndex)
-        if let existingChild = unsafe parentPtr.pointee._children[terminalKey] {
-            let childPtr = unsafe _arena.pointer(at: existingChild)
-            unsafe (childPtr.pointee.value = value)
+        if let existingChild = _arena[currentIndex]._children[terminalKey] {
+            _arena[existingChild].value = value
             let token = _arena.token(at: existingChild)
             return Tree.Position(index: existingChild, token: token)
         } else {
             let arenaPos = _arena.insert(
                 Node(value: value, parentIndex: currentIndex, parentKey: terminalKey)
             )
-            // Re-fetch parent pointer after possible growth
-            let freshParentPtr = unsafe _arena.pointer(at: currentIndex)
-            unsafe (freshParentPtr.pointee._children.set(terminalKey, arenaPos.slot))
+            _arena[currentIndex]._children.set(terminalKey, arenaPos.slot)
             return Tree.Position(index: arenaPos.slot, token: arenaPos.token)
         }
     }
