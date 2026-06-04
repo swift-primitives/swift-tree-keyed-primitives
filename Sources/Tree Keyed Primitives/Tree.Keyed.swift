@@ -38,7 +38,7 @@ public import Stack_Primitives
 ///
 /// ## Arena-Based Storage
 ///
-/// Uses `Buffer<Node>.Arena` for storage — all nodes are stored contiguously
+/// Uses `Buffer<Storage<Node>.Arena>.Arena` for storage — all nodes are stored contiguously
 /// with generation-token validation, LIFO free-list recycling, and automatic
 /// growth. Nodes reference each other by index rather than pointer.
 ///
@@ -114,7 +114,7 @@ extension Tree where Element: ~Copyable {
         // MARK: - Storage
 
         @usableFromInline
-        var _arena: Buffer<Node>.Arena
+        var _arena: Buffer<Storage<Node>.Arena>.Arena
 
         /// Index of root node (nil if empty).
         @usableFromInline
@@ -134,7 +134,7 @@ extension Tree where Element: ~Copyable {
         /// Creates an empty keyed tree.
         @inlinable
         public init() {
-            self._arena = Buffer<Node>.Arena(minimumCapacity: .one)
+            self._arena = Buffer<Storage<Node>.Arena>.Arena(minimumCapacity: .one)
             self._rootIndex = nil
         }
 
@@ -143,7 +143,7 @@ extension Tree where Element: ~Copyable {
         /// - Parameter rootValue: The value for the root node.
         @inlinable
         public init(rootValue: consuming Value) {
-            self._arena = Buffer<Node>.Arena(minimumCapacity: .one)
+            self._arena = Buffer<Storage<Node>.Arena>.Arena(minimumCapacity: .one)
             let arenaPos = _arena.insert(Node(value: rootValue))
             self._rootIndex = arenaPos.slot
         }
@@ -153,7 +153,7 @@ extension Tree where Element: ~Copyable {
         /// - Parameter minimumCapacity: The minimum number of nodes to reserve space for.
         @inlinable
         public init(minimumCapacity: Count) {
-            self._arena = Buffer<Node>.Arena(minimumCapacity: minimumCapacity)
+            self._arena = Buffer<Storage<Node>.Arena>.Arena(minimumCapacity: minimumCapacity)
             self._rootIndex = nil
         }
 
@@ -185,7 +185,7 @@ extension Tree where Element: ~Copyable {
         /// - Tokens use odd/even scheme: odd = occupied, even = free
         @usableFromInline
         func _validate(_ position: Tree.Position) throws(__TreeKeyedError<Key>) {
-            let arenaPos = Buffer<Node>.Arena.Position(
+            let arenaPos = Buffer<Storage<Node>.Arena>.Arena.Position(
                 index: UInt32(Int(bitPattern: position.index)),
                 token: position.token
             )
