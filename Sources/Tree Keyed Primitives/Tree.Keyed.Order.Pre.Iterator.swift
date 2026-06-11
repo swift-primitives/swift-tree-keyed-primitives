@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Arena_Primitive
-public import Dictionary_Ordered_Primitives
+public import Store_Primitive
+public import Storage_Generational_Primitives
 public import Stack_Primitive
 internal import Stack_Primitives
 internal import Iterator_Primitive
@@ -24,13 +24,13 @@ extension Tree.Keyed.Order.Pre {
         let tree: Tree<Element>.Keyed<Key>
 
         @usableFromInline
-        var pending: Stack<Index<Tree<Element>.Keyed<Key>.Node>>
+        var pending: Stack<Store.Generational.Handle>
 
         init(tree: Tree<Element>.Keyed<Key>) {
             self.tree = tree
-            self.pending = Stack<Index<Tree<Element>.Keyed<Key>.Node>>()
-            if let rootIndex = tree._rootIndex {
-                self.pending.push(rootIndex)
+            self.pending = Stack<Store.Generational.Handle>()
+            if let rootHandle = tree._rootHandle {
+                self.pending.push(rootHandle)
             }
         }
 
@@ -38,16 +38,13 @@ extension Tree.Keyed.Order.Pre {
         public mutating func next() -> Element? {
             guard !pending.isEmpty else { return nil }
 
-            let index = pending.pop()!
-            let value = tree._arena[index].value
+            let handle = pending.pop()!
+            let value = tree._node(handle) { $0.value }
 
             // Collect children, push in reverse for correct order
-            var childIndices: [Index<Tree<Element>.Keyed<Key>.Node>] = []
-            tree._arena[index]._children.forEach { _, childIndex in
-                childIndices.append(childIndex)
-            }
-            for i in (0..<childIndices.count).reversed() {
-                pending.push(childIndices[i])
+            let children = tree._children(of: handle)
+            for i in (0..<children.count).reversed() {
+                pending.push(children[i].handle)
             }
 
             return value

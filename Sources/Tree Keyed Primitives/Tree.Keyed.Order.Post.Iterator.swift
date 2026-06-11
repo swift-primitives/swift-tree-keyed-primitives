@@ -9,7 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Arena_Primitive
+public import Store_Primitive
+public import Storage_Generational_Primitives
 public import Stack_Primitive
 internal import Stack_Primitives
 internal import Iterator_Primitive
@@ -26,24 +27,24 @@ extension Tree.Keyed.Order.Post {
         let tree: Tree<Element>.Keyed<Key>
 
         @usableFromInline
-        var output: Stack<Index<Tree<Element>.Keyed<Key>.Node>>
+        var output: Stack<Store.Generational.Handle>
 
         init(tree: Tree<Element>.Keyed<Key>) {
             self.tree = tree
-            self.output = Stack<Index<Tree<Element>.Keyed<Key>.Node>>()
+            self.output = Stack<Store.Generational.Handle>()
 
             // Build reverse post-order via pre-order traversal
-            var pending = Stack<Index<Tree<Element>.Keyed<Key>.Node>>()
-            if let rootIndex = tree._rootIndex {
-                pending.push(rootIndex)
+            var pending = Stack<Store.Generational.Handle>()
+            if let rootHandle = tree._rootHandle {
+                pending.push(rootHandle)
             }
 
             while !pending.isEmpty {
-                let index = pending.pop()!
-                output.push(index)
+                let handle = pending.pop()!
+                output.push(handle)
 
-                tree._arena[index]._children.forEach { _, childIndex in
-                    pending.push(childIndex)
+                for (_, child) in tree._children(of: handle) {
+                    pending.push(child)
                 }
             }
         }
@@ -51,8 +52,8 @@ extension Tree.Keyed.Order.Post {
         @inlinable
         public mutating func next() -> Element? {
             guard !output.isEmpty else { return nil }
-            let index = output.pop()!
-            return tree._arena[index].value
+            let handle = output.pop()!
+            return tree._node(handle) { $0.value }
         }
     }
 }

@@ -9,8 +9,11 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Arena_Primitive
-public import Dictionary_Ordered_Primitives
+public import Store_Primitive
+public import Storage_Generational_Primitives
+public import Shared_Primitive
+public import Column_Primitives
+public import Buffer_Ring_Primitive
 public import Queue_Primitives
 public import Stack_Primitive
 
@@ -26,21 +29,18 @@ extension Tree.Keyed where Element: ~Copyable {
     /// - Parameter body: A closure called with each value in pre-order.
     @inlinable
     public func forEachPreOrder(_ body: (borrowing Value) -> Void) {
-        guard let rootIndex = _rootIndex else { return }
-        var pending = Stack<Index<Node>>()
-        pending.push(rootIndex)
+        guard let rootHandle = _rootHandle else { return }
+        var pending = Stack<Store.Generational.Handle>()
+        pending.push(rootHandle)
 
         while !pending.isEmpty {
-            let index = pending.pop()!
-            body(_arena[index].value)
+            let handle = pending.pop()!
+            _storage.withColumn { body($0[handle].value) }
 
             // Collect children, then push in reverse for correct order
-            var childIndices: [Index<Node>] = []
-            _arena[index]._children.forEach { _, childIndex in
-                childIndices.append(childIndex)
-            }
-            for i in (0..<childIndices.count).reversed() {
-                pending.push(childIndices[i])
+            let children = _children(of: handle)
+            for i in (0..<children.count).reversed() {
+                pending.push(children[i].handle)
             }
         }
     }
@@ -53,28 +53,28 @@ extension Tree.Keyed where Element: ~Copyable {
     /// - Parameter body: A closure called with each value in post-order.
     @inlinable
     public func forEachPostOrder(_ body: (borrowing Value) -> Void) {
-        guard let rootIndex = _rootIndex else { return }
+        guard let rootHandle = _rootHandle else { return }
 
         // Two-stack approach: build reverse post-order, then process
-        var pending = Stack<Index<Node>>()
-        var output = Stack<Index<Node>>()
+        var pending = Stack<Store.Generational.Handle>()
+        var output = Stack<Store.Generational.Handle>()
 
-        pending.push(rootIndex)
+        pending.push(rootHandle)
 
         while !pending.isEmpty {
-            let index = pending.pop()!
-            output.push(index)
+            let handle = pending.pop()!
+            output.push(handle)
 
             // Push children in insertion order (leftmost first) so rightmost ends up on top
-            _arena[index]._children.forEach { _, childIndex in
-                pending.push(childIndex)
+            for (_, child) in _children(of: handle) {
+                pending.push(child)
             }
         }
 
         // Process in reverse order (post-order)
         while !output.isEmpty {
-            let index = output.pop()!
-            body(_arena[index].value)
+            let handle = output.pop()!
+            _storage.withColumn { body($0[handle].value) }
         }
     }
 
@@ -85,18 +85,18 @@ extension Tree.Keyed where Element: ~Copyable {
     /// - Parameter body: A closure called with each value in level-order.
     @inlinable
     public func forEachLevelOrder(_ body: (borrowing Value) -> Void) {
-        guard let rootIndex = _rootIndex else { return }
+        guard let rootHandle = _rootHandle else { return }
 
-        var pending = Queue<Index<Node>>()
-        pending.enqueue(rootIndex)
+        var pending = Queue<Column.Ring<Store.Generational.Handle>>()
+        pending.enqueue(rootHandle)
 
         while !pending.isEmpty {
-            let index = pending.dequeue()!
+            let handle = pending.dequeue()!
 
-            body(_arena[index].value)
+            _storage.withColumn { body($0[handle].value) }
 
-            _arena[index]._children.forEach { _, childIndex in
-                pending.enqueue(childIndex)
+            for (_, child) in _children(of: handle) {
+                pending.enqueue(child)
             }
         }
     }

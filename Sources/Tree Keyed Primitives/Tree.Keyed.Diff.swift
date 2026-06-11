@@ -9,7 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Queue_Primitives
 
 // MARK: - Hoisted Diff Type (Module Level)
 //

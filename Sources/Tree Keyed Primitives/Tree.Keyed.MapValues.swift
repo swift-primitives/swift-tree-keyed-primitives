@@ -9,9 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Arena_Primitive
-public import Dictionary_Ordered_Primitives
-public import Queue_Primitives
+public import Store_Primitive
+public import Storage_Generational_Primitives
 public import Stack_Primitive
 
 // MARK: - Map Values
@@ -25,33 +24,30 @@ extension Tree.Keyed where Element: Copyable {
     @inlinable
     public func mapValues<U>(_ transform: (Value) -> U) -> Tree<U>.Keyed<Key> {
         var result = Tree<U>.Keyed<Key>()
-        guard let rootIndex = _rootIndex else { return result }
+        guard let rootHandle = _rootHandle else { return result }
 
         // Pre-order traversal to preserve structure
-        var pending = Stack<(source: Index<Node>, parentIndex: Index<Tree<U>.Keyed<Key>.Node>?, parentKey: Key?)>()
-        pending.push((rootIndex, nil, nil))
+        var pending = Stack<(source: Store.Generational.Handle, parentHandle: Store.Generational.Handle?, parentKey: Key?)>()
+        pending.push((rootHandle, nil, nil))
 
         while !pending.isEmpty {
-            let (sourceIndex, destParentIndex, key) = pending.pop()!
-            let newValue = transform(_arena[sourceIndex].value)
+            let (sourceHandle, destParentHandle, key) = pending.pop()!
+            let newValue = transform(_node(sourceHandle) { $0.value })
 
-            let arenaPos = result._arena.insert(
-                Tree<U>.Keyed<Key>.Node(value: newValue, parentIndex: destParentIndex, parentKey: key)
+            let handle = result._insert(
+                node: Tree<U>.Keyed<Key>.Node(value: newValue, parentHandle: destParentHandle, parentKey: key)
             )
 
-            if let destParentIndex {
-                result._arena[destParentIndex]._children.set(key!, arenaPos.slot)
+            if let destParentHandle {
+                result._link(parent: destParentHandle, key: key!, child: handle)
             } else {
-                result._rootIndex = arenaPos.slot
+                result._rootHandle = handle
             }
 
             // Collect children in reverse for correct order
-            var children: [(key: Key, index: Index<Node>)] = []
-            _arena[sourceIndex]._children.forEach { childKey, childIndex in
-                children.append((childKey, childIndex))
-            }
+            let children = _children(of: sourceHandle)
             for i in (0..<children.count).reversed() {
-                pending.push((children[i].index, arenaPos.slot, children[i].key))
+                pending.push((children[i].handle, handle, children[i].key))
             }
         }
 
@@ -137,21 +133,21 @@ extension Tree.Keyed where Element: Copyable {
         _ transform: ([Key], Value) throws(E) -> (U, recursivelyApply: Bool)?
     ) throws(E) -> Tree<U>.Keyed<Key> {
         var result = Tree<U>.Keyed<Key>()
-        guard let rootIndex = _rootIndex else { return result }
+        guard let rootHandle = _rootHandle else { return result }
 
         var pending = Stack<
             (
-                source: Index<Node>,
-                destParent: Index<Tree<U>.Keyed<Key>.Node>?,
+                source: Store.Generational.Handle,
+                destParent: Store.Generational.Handle?,
                 parentKey: Key?,
                 path: [Key],
                 broadcast: U?
             )
         >()
-        pending.push((rootIndex, nil, nil, [], nil))
+        pending.push((rootHandle, nil, nil, [], nil))
 
         while !pending.isEmpty {
-            let (sourceIndex, destParentIndex, key, path, broadcast) = pending.pop()!
+            let (sourceHandle, destParentHandle, key, path, broadcast) = pending.pop()!
 
             let newValue: U
             let shouldBroadcast: Bool
@@ -160,34 +156,31 @@ extension Tree.Keyed where Element: Copyable {
                 newValue = broadcastValue
                 shouldBroadcast = true
             } else {
-                guard let transformed = try transform(path, _arena[sourceIndex].value) else {
+                guard let transformed = try transform(path, _node(sourceHandle) { $0.value }) else {
                     continue
                 }
                 newValue = transformed.0
                 shouldBroadcast = transformed.recursivelyApply
             }
 
-            let arenaPos = result._arena.insert(
-                Tree<U>.Keyed<Key>.Node(value: newValue, parentIndex: destParentIndex, parentKey: key)
+            let handle = result._insert(
+                node: Tree<U>.Keyed<Key>.Node(value: newValue, parentHandle: destParentHandle, parentKey: key)
             )
 
-            if let destParentIndex {
-                result._arena[destParentIndex]._children.set(key!, arenaPos.slot)
+            if let destParentHandle {
+                result._link(parent: destParentHandle, key: key!, child: handle)
             } else {
-                result._rootIndex = arenaPos.slot
+                result._rootHandle = handle
             }
 
-            var children: [(key: Key, index: Index<Node>)] = []
-            _arena[sourceIndex]._children.forEach { childKey, childIndex in
-                children.append((childKey, childIndex))
-            }
+            let children = _children(of: sourceHandle)
             for i in (0..<children.count).reversed() {
                 var childPath = path
                 childPath.append(children[i].key)
                 pending.push(
                     (
-                        children[i].index,
-                        arenaPos.slot,
+                        children[i].handle,
+                        handle,
                         children[i].key,
                         childPath,
                         shouldBroadcast ? newValue : nil
@@ -210,33 +203,28 @@ extension Tree.Keyed where Element: Copyable {
     @inlinable
     public func compactMapValues<U>(_ transform: (Value) -> U?) -> Tree<U>.Keyed<Key> {
         var result = Tree<U>.Keyed<Key>()
-        guard let rootIndex = _rootIndex else { return result }
+        guard let rootHandle = _rootHandle else { return result }
 
-        guard let rootValue = transform(_arena[rootIndex].value) else { return result }
+        guard let rootValue = transform(_node(rootHandle) { $0.value }) else { return result }
 
-        let rootPos = result._arena.insert(Tree<U>.Keyed<Key>.Node(value: rootValue))
-        result._rootIndex = rootPos.slot
+        let rootDest = result._insert(node: Tree<U>.Keyed<Key>.Node(value: rootValue))
+        result._rootHandle = rootDest
 
-        var pending = Stack<(source: Index<Node>, destParent: Index<Tree<U>.Keyed<Key>.Node>)>()
-        pending.push((rootIndex, rootPos.slot))
+        var pending = Stack<(source: Store.Generational.Handle, destParent: Store.Generational.Handle)>()
+        pending.push((rootHandle, rootDest))
 
         while !pending.isEmpty {
-            let (sourceIndex, destParentIndex) = pending.pop()!
+            let (sourceHandle, destParentHandle) = pending.pop()!
 
-            var children: [(key: Key, index: Index<Node>)] = []
-            _arena[sourceIndex]._children.forEach { childKey, childIndex in
-                children.append((childKey, childIndex))
-            }
+            for (childKey, childHandle) in _children(of: sourceHandle) {
+                guard let childValue = transform(_node(childHandle) { $0.value }) else { continue }
 
-            for (childKey, childIndex) in children {
-                guard let childValue = transform(_arena[childIndex].value) else { continue }
-
-                let childPos = result._arena.insert(
-                    Tree<U>.Keyed<Key>.Node(value: childValue, parentIndex: destParentIndex, parentKey: childKey)
+                let childDest = result._insert(
+                    node: Tree<U>.Keyed<Key>.Node(value: childValue, parentHandle: destParentHandle, parentKey: childKey)
                 )
-                result._arena[destParentIndex]._children.set(childKey, childPos.slot)
+                result._link(parent: destParentHandle, key: childKey, child: childDest)
 
-                pending.push((childIndex, childPos.slot))
+                pending.push((childHandle, childDest))
             }
         }
 
@@ -284,21 +272,21 @@ extension Tree.Keyed where Element: Copyable {
         _ transform: ([Key], Value) async throws(E) -> (U, recursivelyApply: Bool)?
     ) async throws(E) -> Tree<U>.Keyed<Key> {
         var result = Tree<U>.Keyed<Key>()
-        guard let rootIndex = _rootIndex else { return result }
+        guard let rootHandle = _rootHandle else { return result }
 
         var pending = Stack<
             (
-                source: Index<Node>,
-                destParent: Index<Tree<U>.Keyed<Key>.Node>?,
+                source: Store.Generational.Handle,
+                destParent: Store.Generational.Handle?,
                 parentKey: Key?,
                 path: [Key],
                 broadcast: U?
             )
         >()
-        pending.push((rootIndex, nil, nil, [], nil))
+        pending.push((rootHandle, nil, nil, [], nil))
 
         while !pending.isEmpty {
-            let (sourceIndex, destParentIndex, key, path, broadcast) = pending.pop()!
+            let (sourceHandle, destParentHandle, key, path, broadcast) = pending.pop()!
 
             let newValue: U
             let shouldBroadcast: Bool
@@ -307,34 +295,31 @@ extension Tree.Keyed where Element: Copyable {
                 newValue = broadcastValue
                 shouldBroadcast = true
             } else {
-                guard let transformed = try await transform(path, _arena[sourceIndex].value) else {
+                guard let transformed = try await transform(path, _node(sourceHandle) { $0.value }) else {
                     continue
                 }
                 newValue = transformed.0
                 shouldBroadcast = transformed.recursivelyApply
             }
 
-            let arenaPos = result._arena.insert(
-                Tree<U>.Keyed<Key>.Node(value: newValue, parentIndex: destParentIndex, parentKey: key)
+            let handle = result._insert(
+                node: Tree<U>.Keyed<Key>.Node(value: newValue, parentHandle: destParentHandle, parentKey: key)
             )
 
-            if let destParentIndex {
-                result._arena[destParentIndex]._children.set(key!, arenaPos.slot)
+            if let destParentHandle {
+                result._link(parent: destParentHandle, key: key!, child: handle)
             } else {
-                result._rootIndex = arenaPos.slot
+                result._rootHandle = handle
             }
 
-            var children: [(key: Key, index: Index<Node>)] = []
-            _arena[sourceIndex]._children.forEach { childKey, childIndex in
-                children.append((childKey, childIndex))
-            }
+            let children = _children(of: sourceHandle)
             for i in (0..<children.count).reversed() {
                 var childPath = path
                 childPath.append(children[i].key)
                 pending.push(
                     (
-                        children[i].index,
-                        arenaPos.slot,
+                        children[i].handle,
+                        handle,
                         children[i].key,
                         childPath,
                         shouldBroadcast ? newValue : nil

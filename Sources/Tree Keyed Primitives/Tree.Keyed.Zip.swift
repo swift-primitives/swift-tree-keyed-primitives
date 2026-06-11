@@ -9,9 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Arena_Primitive
-public import Dictionary_Ordered_Primitives
-public import Queue_Primitives
+public import Store_Primitive
+public import Storage_Generational_Primitives
 public import Stack_Primitive
 
 // MARK: - Zip (Structural Intersection)
@@ -33,43 +32,43 @@ public func zip<Key: Hash.`Protocol`, A, B>(
 ) -> Tree<(A, B)>.Keyed<Key> {
     var result = Tree<(A, B)>.Keyed<Key>()
 
-    guard let lhsRoot = lhs._rootIndex, let rhsRoot = rhs._rootIndex else {
+    guard let lhsRoot = lhs._rootHandle, let rhsRoot = rhs._rootHandle else {
         return result
     }
 
-    let rootPos = result._arena.insert(
-        Tree<(A, B)>.Keyed<Key>.Node(
-            value: (lhs._arena[lhsRoot].value, rhs._arena[rhsRoot].value)
+    let rootDest = result._insert(
+        node: Tree<(A, B)>.Keyed<Key>.Node(
+            value: (lhs._node(lhsRoot) { $0.value }, rhs._node(rhsRoot) { $0.value })
         )
     )
-    result._rootIndex = rootPos.slot
+    result._rootHandle = rootDest
 
     var pending = Stack<
         (
-            lhsIndex: Index<Tree<A>.Keyed<Key>.Node>,
-            rhsIndex: Index<Tree<B>.Keyed<Key>.Node>,
-            destParent: Index<Tree<(A, B)>.Keyed<Key>.Node>
+            lhsHandle: Store.Generational.Handle,
+            rhsHandle: Store.Generational.Handle,
+            destParent: Store.Generational.Handle
         )
     >()
-    pending.push((lhsRoot, rhsRoot, rootPos.slot))
+    pending.push((lhsRoot, rhsRoot, rootDest))
 
     while !pending.isEmpty {
-        let (lhsIndex, rhsIndex, destParentIndex) = pending.pop()!
+        let (lhsHandle, rhsHandle, destParentHandle) = pending.pop()!
 
         // For each child key in lhs, check if rhs also has it
-        lhs._arena[lhsIndex]._children.forEach { key, lhsChildIndex in
-            guard let rhsChildIndex = rhs._arena[rhsIndex]._children[key] else { return }
+        for (key, lhsChild) in lhs._children(of: lhsHandle) {
+            guard let rhsChild = rhs._childHandle(of: rhsHandle, key: key) else { continue }
 
-            let childPos = result._arena.insert(
-                Tree<(A, B)>.Keyed<Key>.Node(
-                    value: (lhs._arena[lhsChildIndex].value, rhs._arena[rhsChildIndex].value),
-                    parentIndex: destParentIndex,
+            let childDest = result._insert(
+                node: Tree<(A, B)>.Keyed<Key>.Node(
+                    value: (lhs._node(lhsChild) { $0.value }, rhs._node(rhsChild) { $0.value }),
+                    parentHandle: destParentHandle,
                     parentKey: key
                 )
             )
-            result._arena[destParentIndex]._children.set(key, childPos.slot)
+            result._link(parent: destParentHandle, key: key, child: childDest)
 
-            pending.push((lhsChildIndex, rhsChildIndex, childPos.slot))
+            pending.push((lhsChild, rhsChild, childDest))
         }
     }
 

@@ -9,8 +9,11 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Arena_Primitive
-public import Dictionary_Ordered_Primitives
+public import Store_Primitive
+public import Storage_Generational_Primitives
+public import Shared_Primitive
+public import Column_Primitives
+public import Buffer_Ring_Primitive
 public import Queue_Primitives
 internal import Iterator_Primitive
 internal import Iterator_Protocol
@@ -22,15 +25,18 @@ extension Tree.Keyed.Order.Level {
         @usableFromInline
         let tree: Tree<Element>.Keyed<Key>
 
+        /// The pending-node FIFO on the `Shared` ring column — the CoW flavor is
+        /// required here (not the move-only direct ring) so the iterator struct
+        /// itself stays `Copyable`, preserving its pre-reshape shape.
         @usableFromInline
-        var pending: Queue<Index<Tree<Element>.Keyed<Key>.Node>>
+        var pending: Queue<Shared<Store.Generational.Handle, Column.Ring<Store.Generational.Handle>>>
 
         init(tree: Tree<Element>.Keyed<Key>) {
             self.tree = tree
-            self.pending = Queue<Index<Tree<Element>.Keyed<Key>.Node>>()
+            self.pending = Queue<Shared<Store.Generational.Handle, Column.Ring<Store.Generational.Handle>>>()
 
-            if let rootIndex = tree._rootIndex {
-                pending.enqueue(rootIndex)
+            if let rootHandle = tree._rootHandle {
+                pending.enqueue(rootHandle)
             }
         }
 
@@ -38,11 +44,11 @@ extension Tree.Keyed.Order.Level {
         public mutating func next() -> Element? {
             guard !pending.isEmpty else { return nil }
 
-            let index = pending.dequeue()!
-            let value = tree._arena[index].value
+            let handle = pending.dequeue()!
+            let value = tree._node(handle) { $0.value }
 
-            tree._arena[index]._children.forEach { _, childIndex in
-                pending.enqueue(childIndex)
+            for (_, child) in tree._children(of: handle) {
+                pending.enqueue(child)
             }
 
             return value

@@ -9,9 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Arena_Primitive
-public import Dictionary_Ordered_Primitives
-public import Queue_Primitives
+public import Store_Primitive
+public import Storage_Generational_Primitives
 public import Stack_Primitive
 
 // MARK: - ForEach with Key Path
@@ -29,23 +28,20 @@ extension Tree.Keyed where Element: Copyable {
     public func forEach<E>(
         _ body: ([Key], Value) throws(E) -> Void
     ) throws(E) {
-        guard let rootIndex = _rootIndex else { return }
+        guard let rootHandle = _rootHandle else { return }
 
-        var pending = Stack<(index: Index<Node>, path: [Key])>()
-        pending.push((rootIndex, []))
+        var pending = Stack<(handle: Store.Generational.Handle, path: [Key])>()
+        pending.push((rootHandle, []))
 
         while !pending.isEmpty {
-            let (index, path) = pending.pop()!
-            try body(path, _arena[index].value)
+            let (handle, path) = pending.pop()!
+            try body(path, _node(handle) { $0.value })
 
-            var children: [(key: Key, index: Index<Node>)] = []
-            _arena[index]._children.forEach { key, childIndex in
-                children.append((key, childIndex))
-            }
+            let children = _children(of: handle)
             for i in (0..<children.count).reversed() {
                 var childPath = path
                 childPath.append(children[i].key)
-                pending.push((children[i].index, childPath))
+                pending.push((children[i].handle, childPath))
             }
         }
     }
@@ -55,23 +51,20 @@ extension Tree.Keyed where Element: Copyable {
     public func forEach<E>(
         _ body: ([Key], Value) async throws(E) -> Void
     ) async throws(E) {
-        guard let rootIndex = _rootIndex else { return }
+        guard let rootHandle = _rootHandle else { return }
 
-        var pending = Stack<(index: Index<Node>, path: [Key])>()
-        pending.push((rootIndex, []))
+        var pending = Stack<(handle: Store.Generational.Handle, path: [Key])>()
+        pending.push((rootHandle, []))
 
         while !pending.isEmpty {
-            let (index, path) = pending.pop()!
-            try await body(path, _arena[index].value)
+            let (handle, path) = pending.pop()!
+            try await body(path, _node(handle) { $0.value })
 
-            var children: [(key: Key, index: Index<Node>)] = []
-            _arena[index]._children.forEach { key, childIndex in
-                children.append((key, childIndex))
-            }
+            let children = _children(of: handle)
             for i in (0..<children.count).reversed() {
                 var childPath = path
                 childPath.append(children[i].key)
-                pending.push((children[i].index, childPath))
+                pending.push((children[i].handle, childPath))
             }
         }
     }

@@ -9,9 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Arena_Primitive
-public import Dictionary_Ordered_Primitives
-public import Queue_Primitives
+public import Store_Primitive
+public import Storage_Generational_Primitives
 public import Stack_Primitive
 
 // MARK: - Subtree Extraction
@@ -35,30 +34,25 @@ extension Tree.Keyed where Element: Copyable {
     @inlinable
     public func subtree(at keyPath: some Swift.Sequence<Key>) -> Tree<Element>.Keyed<Key>? {
         guard let pos = position(at: keyPath) else { return nil }
+        guard let sourceHandle = try? _handle(pos) else { return nil }
 
         var result = Tree<Element>.Keyed<Key>()
-        let sourceIndex = _slot(pos.index)
 
-        let rootPos = result._arena.insert(Node(value: _arena[sourceIndex].value))
-        result._rootIndex = rootPos.slot
+        let rootDest = result._insert(node: Node(value: _node(sourceHandle) { $0.value }))
+        result._rootHandle = rootDest
 
-        var pending = Stack<(source: Index<Node>, dest: Index<Node>)>()
-        pending.push((sourceIndex, rootPos.slot))
+        var pending = Stack<(source: Store.Generational.Handle, dest: Store.Generational.Handle)>()
+        pending.push((sourceHandle, rootDest))
 
         while !pending.isEmpty {
-            let (srcIdx, dstIdx) = pending.pop()!
+            let (srcHandle, dstHandle) = pending.pop()!
 
-            var children: [(key: Key, index: Index<Node>)] = []
-            _arena[srcIdx]._children.forEach { key, childIndex in
-                children.append((key, childIndex))
-            }
-
-            for (childKey, childIndex) in children {
-                let newChild = result._arena.insert(
-                    Node(value: _arena[childIndex].value, parentIndex: dstIdx, parentKey: childKey)
+            for (childKey, childHandle) in _children(of: srcHandle) {
+                let newChild = result._insert(
+                    node: Node(value: _node(childHandle) { $0.value }, parentHandle: dstHandle, parentKey: childKey)
                 )
-                result._arena[dstIdx]._children.set(childKey, newChild.slot)
-                pending.push((childIndex, newChild.slot))
+                result._link(parent: dstHandle, key: childKey, child: newChild)
+                pending.push((childHandle, newChild))
             }
         }
 

@@ -9,9 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Arena_Primitive
-public import Dictionary_Ordered_Primitives
-public import Queue_Primitives
+public import Store_Primitive
+public import Storage_Generational_Primitives
 public import Stack_Primitive
 
 // MARK: - Prune
@@ -27,11 +26,10 @@ extension Tree.Keyed where Element: Copyable {
     /// - Parameter shouldRemove: A closure that returns true for nodes to prune.
     @inlinable
     public mutating func prune(where shouldRemove: (Value) -> Bool) {
-        guard let rootIndex = _rootIndex else { return }
-        makeUnique()
+        guard let rootHandle = _rootHandle else { return }
 
         // Check root first
-        if shouldRemove(_arena[rootIndex].value) {
+        if shouldRemove(_node(rootHandle) { $0.value }) {
             // Remove entire tree
             if let root = self.root {
                 try? removeSubtree(at: root)
@@ -40,50 +38,45 @@ extension Tree.Keyed where Element: Copyable {
         }
 
         // Collect nodes to prune via pre-order traversal
-        var toPrune: [(parentIndex: Index<Node>, key: Key)] = []
-        var pending = Stack<Index<Node>>()
-        pending.push(rootIndex)
+        var toPrune: [(parentHandle: Store.Generational.Handle, key: Key)] = []
+        var pending = Stack<Store.Generational.Handle>()
+        pending.push(rootHandle)
 
         while !pending.isEmpty {
-            let index = pending.pop()!
+            let handle = pending.pop()!
 
-            var children: [(key: Key, index: Index<Node>)] = []
-            _arena[index]._children.forEach { key, childIndex in
-                children.append((key, childIndex))
-            }
-
-            for (childKey, childIndex) in children {
-                if shouldRemove(_arena[childIndex].value) {
-                    toPrune.append((parentIndex: index, key: childKey))
+            for (childKey, childHandle) in _children(of: handle) {
+                if shouldRemove(_node(childHandle) { $0.value }) {
+                    toPrune.append((parentHandle: handle, key: childKey))
                 } else {
-                    pending.push(childIndex)
+                    pending.push(childHandle)
                 }
             }
         }
 
         // Remove pruned subtrees (in reverse to avoid invalidation issues)
-        for (parentIndex, key) in toPrune.reversed() {
-            guard let childIndex = _arena[parentIndex]._children[key] else { continue }
+        for (parentHandle, key) in toPrune.reversed() {
+            guard let childHandle = _childHandle(of: parentHandle, key: key) else { continue }
 
             // Remove child from parent's dictionary
-            _arena[parentIndex]._children.remove(key)
+            _unlink(parent: parentHandle, key: key)
 
-            // Free the subtree
-            var freePending = Stack<Index<Node>>()
-            var freeOutput = Stack<Index<Node>>()
-            freePending.push(childIndex)
+            // Free the subtree (post-order: children before parents)
+            var freePending = Stack<Store.Generational.Handle>()
+            var freeOutput = Stack<Store.Generational.Handle>()
+            freePending.push(childHandle)
 
             while !freePending.isEmpty {
                 let current = freePending.pop()!
                 freeOutput.push(current)
-                _arena[current]._children.forEach { _, grandchildIndex in
-                    freePending.push(grandchildIndex)
+                for (_, grandchild) in _children(of: current) {
+                    freePending.push(grandchild)
                 }
             }
 
             while !freeOutput.isEmpty {
-                let idx = freeOutput.pop()!
-                _arena.free(at: idx)
+                let current = freeOutput.pop()!
+                _ = _remove(current)
             }
         }
     }

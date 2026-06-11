@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Arena_Primitive
-public import Dictionary_Ordered_Primitives
+public import Store_Primitive
+public import Storage_Generational_Primitives
 
 // MARK: - Values Along Key Path
 
@@ -32,23 +32,23 @@ extension Tree.Keyed where Element: Copyable {
     public func values(
         along keyPath: some Swift.Sequence<Key>
     ) -> [Value?] {
-        guard let rootIndex = _rootIndex else { return [] }
+        guard let rootHandle = _rootHandle else { return [] }
 
         var result: [Value?] = []
-        var currentIndex: Index<Node>? = rootIndex
+        var currentHandle: Store.Generational.Handle? = rootHandle
 
         for key in keyPath {
-            guard let index = currentIndex else {
+            guard let handle = currentHandle else {
                 result.append(nil)
                 continue
             }
 
-            if let childIndex = _arena[index]._children[key] {
-                result.append(_arena[childIndex].value)
-                currentIndex = childIndex
+            if let childHandle = _childHandle(of: handle, key: key) {
+                result.append(_node(childHandle) { $0.value })
+                currentHandle = childHandle
             } else {
                 result.append(nil)
-                currentIndex = nil
+                currentHandle = nil
             }
         }
 

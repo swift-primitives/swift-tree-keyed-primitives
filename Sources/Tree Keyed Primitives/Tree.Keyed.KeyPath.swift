@@ -9,9 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Buffer_Arena_Primitive
-public import Dictionary_Ordered_Primitives
-public import Queue_Primitives
+public import Store_Primitive
+public import Storage_Generational_Primitives
+public import Shared_Primitive
 
 // MARK: - Key Path Operations
 
@@ -27,21 +27,17 @@ extension Tree.Keyed where Element: ~Copyable {
     /// - Complexity: O(d) where d is the depth of the node.
     @inlinable
     public func keyPath(to position: Tree.Position) -> [Key]? {
-        do {
-            try _validate(position)
-        } catch {
-            return nil
-        }
+        guard let handle = try? _handle(position) else { return nil }
 
         var path: [Key] = []
-        var current = _slot(position.index)
+        var current = handle
 
-        while let parentKey = _arena[current].parentKey {
+        while let parentKey = _node(current, { $0.parentKey }) {
             path.append(parentKey)
-            guard let parentIndex = _arena[current].parentIndex else {
+            guard let parentHandle = _node(current, { $0.parentHandle }) else {
                 break
             }
-            current = parentIndex
+            current = parentHandle
         }
 
         path.reverse()
@@ -56,18 +52,17 @@ extension Tree.Keyed where Element: ~Copyable {
     /// - Complexity: O(d) where d is the length of the key path.
     @inlinable
     public func position(at keyPath: some Swift.Sequence<Key>) -> Tree.Position? {
-        guard let rootIndex = _rootIndex else { return nil }
+        guard let rootHandle = _rootHandle else { return nil }
 
-        var current = rootIndex
+        var current = rootHandle
         for key in keyPath {
-            guard let childIndex = _arena[current]._children[key] else {
+            guard let childHandle = _childHandle(of: current, key: key) else {
                 return nil
             }
-            current = childIndex
+            current = childHandle
         }
 
-        let token = _arena.token(at: current)
-        return Tree.Position(index: current, token: token)
+        return _position(of: current)
     }
 }
 
@@ -120,43 +115,40 @@ extension Tree.Keyed where Element: Copyable {
         at keyPath: [Key],
         intermediateValue: (Key) -> Value
     ) throws(__TreeKeyedError<Key>) -> Tree.Position {
-        makeUnique()
         precondition(!keyPath.isEmpty, "Key path must not be empty")
 
         // Ensure root exists
-        if _rootIndex == nil {
-            let arenaPos = _arena.insert(Node(value: intermediateValue(keyPath[0])))
-            _rootIndex = arenaPos.slot
+        if _rootHandle == nil {
+            _rootHandle = _insert(node: Node(value: intermediateValue(keyPath[0])))
         }
 
-        var currentIndex = _rootIndex!
+        var currentHandle = _rootHandle!
 
         // Walk down to the parent of the terminal node, creating intermediates
         for i in keyPath.indices.dropLast() {
             let key = keyPath[i]
-            if let childIndex = _arena[currentIndex]._children[key] {
-                currentIndex = childIndex
+            if let childHandle = _childHandle(of: currentHandle, key: key) {
+                currentHandle = childHandle
             } else {
-                let arenaPos = _arena.insert(
-                    Node(value: intermediateValue(key), parentIndex: currentIndex, parentKey: key)
+                let handle = _insert(
+                    node: Node(value: intermediateValue(key), parentHandle: currentHandle, parentKey: key)
                 )
-                _arena[currentIndex]._children.set(key, arenaPos.slot)
-                currentIndex = arenaPos.slot
+                _link(parent: currentHandle, key: key, child: handle)
+                currentHandle = handle
             }
         }
 
         // Insert or update terminal node
         let terminalKey = keyPath.last!
-        if let existingChild = _arena[currentIndex]._children[terminalKey] {
-            _arena[existingChild].value = value
-            let token = _arena.token(at: existingChild)
-            return Tree.Position(index: existingChild, token: token)
+        if let existingChild = _childHandle(of: currentHandle, key: terminalKey) {
+            _storage.withUnique { $0[existingChild].value = value }
+            return _position(of: existingChild)
         } else {
-            let arenaPos = _arena.insert(
-                Node(value: value, parentIndex: currentIndex, parentKey: terminalKey)
+            let handle = _insert(
+                node: Node(value: value, parentHandle: currentHandle, parentKey: terminalKey)
             )
-            _arena[currentIndex]._children.set(terminalKey, arenaPos.slot)
-            return Tree.Position(index: arenaPos.slot, token: arenaPos.token)
+            _link(parent: currentHandle, key: terminalKey, child: handle)
+            return _position(of: handle)
         }
     }
 }
