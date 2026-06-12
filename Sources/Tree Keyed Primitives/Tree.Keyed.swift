@@ -148,13 +148,6 @@ extension Tree where Element: ~Copyable {
         @usableFromInline
         var _storage: Shared<Node, Column.Generational<Node>>
 
-        /// Slot → live handle side table for decoding public `Tree.Position` values
-        /// (a position carries only `(slot, UInt32 token)`; handles cannot be minted
-        /// outside the column, so the tree records the handle of every occupied slot).
-        /// Sized to the column's capacity; `nil` marks a free slot.
-        @usableFromInline
-        var _handles: Swift.Array<Store.Generational.Handle?>
-
         /// Handle of root node (nil if empty).
         @usableFromInline
         var _rootHandle: Store.Generational.Handle?
@@ -175,7 +168,6 @@ extension Tree where Element: ~Copyable {
         @inlinable
         public init() {
             self._storage = Shared(Column.Generational<Node>.create(slotCapacity: 1))
-            self._handles = Swift.Array(repeating: nil, count: 1)
             self._rootHandle = nil
         }
 
@@ -193,9 +185,8 @@ extension Tree where Element: ~Copyable {
         /// - Parameter minimumCapacity: The minimum number of nodes to reserve space for.
         @inlinable
         public init(minimumCapacity: Count) {
-            let capacity = Swift.max(Int(bitPattern: minimumCapacity), 1)
+            let capacity = Index<Node>.Count(UInt(Swift.max(Int(bitPattern: minimumCapacity), 1)))
             self._storage = Shared(Column.Generational<Node>.create(slotCapacity: capacity))
-            self._handles = Swift.Array(repeating: nil, count: capacity)
             self._rootHandle = nil
         }
 
@@ -204,7 +195,6 @@ extension Tree where Element: ~Copyable {
         @inlinable
         public init() where Element: Copyable {
             self._storage = Shared(Column.Generational<Node>.create(slotCapacity: 1))
-            self._handles = Swift.Array(repeating: nil, count: 1)
             self._rootHandle = nil
         }
 
@@ -224,9 +214,8 @@ extension Tree where Element: ~Copyable {
         /// - Parameter minimumCapacity: The minimum number of nodes to reserve space for.
         @inlinable
         public init(minimumCapacity: Count) where Element: Copyable {
-            let capacity = Swift.max(Int(bitPattern: minimumCapacity), 1)
+            let capacity = Index<Node>.Count(UInt(Swift.max(Int(bitPattern: minimumCapacity), 1)))
             self._storage = Shared(Column.Generational<Node>.create(slotCapacity: capacity))
-            self._handles = Swift.Array(repeating: nil, count: capacity)
             self._rootHandle = nil
         }
 
@@ -257,20 +246,17 @@ extension Tree where Element: ~Copyable {
             Tree.Position(index: handle.index, token: UInt32(truncatingIfNeeded: handle.generation))
         }
 
-        /// Decodes a public position into the live handle for its slot.
-        ///
-        /// Token validation provides O(1) safety checking:
-        /// - Stale positions (after removal) are detected and rejected
-        /// - No node memory is accessed without validation
+        /// Decodes a public position by RECONSTRUCTING the live handle from the
+        /// column's ledger (`handle(at:)` — Round M B2; no side table). Token
+        /// validation provides O(1) safety checking: stale positions are
+        /// detected and rejected; no node memory is accessed without validation.
         @usableFromInline
         func _handle(_ position: Tree.Position) throws(__TreeKeyedError<Key>) -> Store.Generational.Handle {
             let slot = Int(bitPattern: position.index)
             guard
                 slot >= 0,
-                slot < _handles.count,
-                let handle = _handles[slot],
-                UInt32(truncatingIfNeeded: handle.generation) == position.token,
-                _storage.withColumn({ $0.contains(handle) })
+                let handle = _storage.withColumn({ $0.handle(at: Index<Node>(Ordinal(UInt(slot)))) }),
+                UInt32(truncatingIfNeeded: handle.generation) == position.token
             else { throw .invalidPosition }
             return handle
         }
@@ -282,33 +268,25 @@ extension Tree where Element: ~Copyable {
         }
 
         /// Inserts a node into the column, growing first when full (the explicit
-        /// `grow(to:)` door — positions survive growth by its contract), and
-        /// records the minted handle in the side table.
+        /// `grow(to:)` door — positions survive growth by its contract).
         @inlinable
         mutating func _insert(node: consuming Node) -> Store.Generational.Handle {
-            let handle = _storage.withUnique(consuming: node) { (column, node) -> Store.Generational.Handle in
+            _storage.withUnique(consuming: node) { (column, node) -> Store.Generational.Handle in
                 if column.count == column.capacity {
                     let doubled = Index<Node>.Count(UInt(2 &* Int(bitPattern: column.capacity)))
                     column.grow(to: doubled)
                 }
                 return column.insert(node)
             }
-            let capacity = Int(bitPattern: _storage.capacity)
-            while _handles.count < capacity {
-                _handles.append(nil)
-            }
-            _handles[handle.index] = handle
-            return handle
         }
 
-        /// Removes the node at a live handle, clearing its side-table entry.
+        /// Removes the node at a live handle.
         @inlinable
         mutating func _remove(_ handle: Store.Generational.Handle) -> Node {
             guard let node = _storage.withUnique({ $0.remove(handle) }) else {
                 // Unreachable: callers pass decoded live handles and no removal interleaves.
                 preconditionFailure("Tree.Keyed: live handle failed to resolve on removal")
             }
-            _handles[handle.index] = nil
             return node
         }
 
@@ -481,9 +459,6 @@ extension Tree.Keyed where Element: ~Copyable {
     @inlinable
     public mutating func clear() {
         _storage.withUnique { $0.removeAll() }
-        for index in _handles.indices {
-            _handles[index] = nil
-        }
         _rootHandle = nil
     }
 
