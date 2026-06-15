@@ -34,11 +34,11 @@ extension Tree.Keyed where Element: Copyable {
     @inlinable
     public func subtree(at keyPath: some Swift.Sequence<Key>) -> Tree<Element>.Keyed<Key>? {
         guard let pos = position(at: keyPath) else { return nil }
-        guard let sourceHandle = try? _handle(pos) else { return nil }
+        guard let sourceHandle = _liveHandle(pos) else { return nil }
 
         var result = Tree<Element>.Keyed<Key>()
 
-        let rootDest = result._insert(node: Node(value: _node(sourceHandle) { $0.value }))
+        let rootDest = result._insertNode(_value(of: sourceHandle), parent: nil)
         result._rootHandle = rootDest
 
         var pending = Stack<(source: Store.Generational.Handle, dest: Store.Generational.Handle)>()
@@ -48,10 +48,8 @@ extension Tree.Keyed where Element: Copyable {
             let (srcHandle, dstHandle) = pending.pop()!
 
             for (childKey, childHandle) in _children(of: srcHandle) {
-                let newChild = result._insert(
-                    node: Node(value: _node(childHandle) { $0.value }, parentHandle: dstHandle, parentKey: childKey)
-                )
-                result._link(parent: dstHandle, key: childKey, child: newChild)
+                let newChild = result._insertNode(_value(of: childHandle), parent: dstHandle)
+                result._linkChild(newChild, to: dstHandle, at: childKey)
                 pending.push((childHandle, newChild))
             }
         }

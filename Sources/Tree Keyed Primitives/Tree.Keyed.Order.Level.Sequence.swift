@@ -17,6 +17,7 @@ public import Sequence_Primitives
 extension Tree.Keyed.Order.Level {
 
     /// A sequence that yields values in level-order (breadth-first) traversal.
+    @frozen
     public struct Sequence {
         let tree: Tree<Element>.Keyed<Key>
     }

@@ -39,7 +39,7 @@ extension Tree.Keyed.Order.Pre {
             guard !pending.isEmpty else { return nil }
 
             let handle = pending.pop()!
-            let value = tree._node(handle) { $0.value }
+            let value = tree._value(of: handle)
 
             // Collect children, push in reverse for correct order
             let children = tree._children(of: handle)

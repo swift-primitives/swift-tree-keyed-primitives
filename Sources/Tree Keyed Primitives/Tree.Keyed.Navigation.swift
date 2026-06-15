@@ -9,11 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Store_Primitive
-public import Storage_Generational_Primitives
-public import Shared_Primitive
-public import Dictionary_Ordered_Primitives
-
 // MARK: - Navigation
 
 extension Tree.Keyed where Element: ~Copyable {
@@ -27,23 +22,9 @@ extension Tree.Keyed where Element: ~Copyable {
     /// - Note: Returns `nil` if the position is invalid (stale or out of bounds).
     @inlinable
     public func child(of position: Tree.Position, key: Key) -> Tree.Position? {
-        guard let handle = try? _handle(position) else { return nil }
+        guard let handle = _liveHandle(position) else { return nil }
         guard let childHandle = _childHandle(of: handle, key: key) else { return nil }
         return _position(of: childHandle)
-    }
-
-    /// Returns the position of the parent of the node at the given position.
-    ///
-    /// - Parameter position: The position of the child node.
-    /// - Returns: The position of the parent, or `nil` if the node is the root.
-    /// - Note: Returns `nil` if the position is invalid (stale or out of bounds).
-    @inlinable
-    public func parent(of position: Tree.Position) -> Tree.Position? {
-        guard let handle = try? _handle(position) else { return nil }
-        guard let parentHandle = _node(handle, { $0.parentHandle }) else {
-            return nil
-        }
-        return _position(of: parentHandle)
     }
 
     /// Returns the key under which this node is stored in its parent.
@@ -52,29 +33,21 @@ extension Tree.Keyed where Element: ~Copyable {
     /// - Returns: The parent key, or `nil` if the node is the root or position is invalid.
     @inlinable
     public func key(of position: Tree.Position) -> Key? {
-        guard let handle = try? _handle(position) else { return nil }
-        return _node(handle) { $0.parentKey }
-    }
-
-    /// Returns whether the node at the given position is a leaf (has no children).
-    ///
-    /// - Parameter position: The position to check.
-    /// - Returns: `true` if the node has no children, `false` otherwise.
-    /// - Note: Returns `false` if the position is invalid (stale or out of bounds).
-    @inlinable
-    public func isLeaf(_ position: Tree.Position) -> Bool {
-        guard let handle = try? _handle(position) else { return false }
-        return _node(handle) { $0._children.isEmpty }
+        guard let handle = _liveHandle(position) else { return nil }
+        return _parentKey(of: handle)
     }
 
     /// Returns the number of children of the node at the given position.
     ///
+    /// Typed as `Int?`: a key is not an `Index`, so the keyed child set carries no
+    /// `.Count` domain — the child tally is a plain non-negative integer.
+    ///
     /// - Parameter position: The position to check.
     /// - Returns: The number of children, or `nil` if position is invalid.
     @inlinable
-    public func childCount(of position: Tree.Position) -> Count? {
-        guard let handle = try? _handle(position) else { return nil }
-        return _node(handle) { $0._children.count.retag(Node.self) }
+    public func childCount(of position: Tree.Position) -> Int? {
+        guard let handle = _liveHandle(position) else { return nil }
+        return _childCount(at: handle)
     }
 
     /// Returns the keys and positions of all children of the node at the given position.
@@ -88,7 +61,7 @@ extension Tree.Keyed where Element: ~Copyable {
     /// - Returns: An array of (key, position) pairs in insertion order, or nil if position is invalid.
     @inlinable
     public func children(of position: Tree.Position) -> [(key: Key, position: Tree.Position)]? {
-        guard let handle = try? _handle(position) else { return nil }
+        guard let handle = _liveHandle(position) else { return nil }
         var result: [(key: Key, position: Tree.Position)] = []
         for (key, childHandle) in _children(of: handle) {
             result.append((key, _position(of: childHandle)))
@@ -108,7 +81,7 @@ extension Tree.Keyed where Element: ~Copyable {
         of position: Tree.Position,
         _ body: (Key, Tree.Position) -> Void
     ) {
-        guard let handle = try? _handle(position) else { return }
+        guard let handle = _liveHandle(position) else { return }
         for (key, childHandle) in _children(of: handle) {
             body(key, _position(of: childHandle))
         }

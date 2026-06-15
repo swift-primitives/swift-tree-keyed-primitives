@@ -11,7 +11,7 @@
 
 public import Store_Primitive
 public import Storage_Generational_Primitives
-public import Shared_Primitive
+public import Tree_Primitives_Core
 
 // MARK: - Key Path Operations
 
@@ -27,14 +27,14 @@ extension Tree.Keyed where Element: ~Copyable {
     /// - Complexity: O(d) where d is the depth of the node.
     @inlinable
     public func keyPath(to position: Tree.Position) -> [Key]? {
-        guard let handle = try? _handle(position) else { return nil }
+        guard let handle = _liveHandle(position) else { return nil }
 
         var path: [Key] = []
         var current = handle
 
-        while let parentKey = _node(current, { $0.parentKey }) {
+        while let parentKey = _parentKey(of: current) {
             path.append(parentKey)
-            guard let parentHandle = _node(current, { $0.parentHandle }) else {
+            guard let parentHandle = _parentHandle(of: current) else {
                 break
             }
             current = parentHandle
@@ -119,7 +119,7 @@ extension Tree.Keyed where Element: Copyable {
 
         // Ensure root exists
         if _rootHandle == nil {
-            _rootHandle = _insert(node: Node(value: intermediateValue(keyPath[0])))
+            _rootHandle = _insertNode(intermediateValue(keyPath[0]), parent: nil)
         }
 
         var currentHandle = _rootHandle!
@@ -130,10 +130,8 @@ extension Tree.Keyed where Element: Copyable {
             if let childHandle = _childHandle(of: currentHandle, key: key) {
                 currentHandle = childHandle
             } else {
-                let handle = _insert(
-                    node: Node(value: intermediateValue(key), parentHandle: currentHandle, parentKey: key)
-                )
-                _link(parent: currentHandle, key: key, child: handle)
+                let handle = _insertNode(intermediateValue(key), parent: currentHandle)
+                _linkChild(handle, to: currentHandle, at: key)
                 currentHandle = handle
             }
         }
@@ -141,13 +139,11 @@ extension Tree.Keyed where Element: Copyable {
         // Insert or update terminal node
         let terminalKey = keyPath.last!
         if let existingChild = _childHandle(of: currentHandle, key: terminalKey) {
-            _storage.withUnique { $0[existingChild].value = value }
+            _storage.withElementMut(at: existingChild) { $0 = value }
             return _position(of: existingChild)
         } else {
-            let handle = _insert(
-                node: Node(value: value, parentHandle: currentHandle, parentKey: terminalKey)
-            )
-            _link(parent: currentHandle, key: terminalKey, child: handle)
+            let handle = _insertNode(value, parent: currentHandle)
+            _linkChild(handle, to: currentHandle, at: terminalKey)
             return _position(of: handle)
         }
     }

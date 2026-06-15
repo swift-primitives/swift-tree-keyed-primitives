@@ -35,7 +35,7 @@ extension Tree.Keyed where Element: Copyable {
 
         while !pending.isEmpty {
             let (handle, path) = pending.pop()!
-            try body(path, _node(handle) { $0.value })
+            try body(path, _value(of: handle))
 
             let children = _children(of: handle)
             for i in (0..<children.count).reversed() {
@@ -58,7 +58,7 @@ extension Tree.Keyed where Element: Copyable {
 
         while !pending.isEmpty {
             let (handle, path) = pending.pop()!
-            try await body(path, _node(handle) { $0.value })
+            try await body(path, _value(of: handle))
 
             let children = _children(of: handle)
             for i in (0..<children.count).reversed() {

@@ -29,7 +29,7 @@ extension Tree.Keyed where Element: Copyable {
         guard let rootHandle = _rootHandle else { return }
 
         // Check root first
-        if shouldRemove(_node(rootHandle) { $0.value }) {
+        if shouldRemove(_value(of: rootHandle)) {
             // Remove entire tree
             if let root = self.root {
                 try? removeSubtree(at: root)
@@ -46,7 +46,7 @@ extension Tree.Keyed where Element: Copyable {
             let handle = pending.pop()!
 
             for (childKey, childHandle) in _children(of: handle) {
-                if shouldRemove(_node(childHandle) { $0.value }) {
+                if shouldRemove(_value(of: childHandle)) {
                     toPrune.append((parentHandle: handle, key: childKey))
                 } else {
                     pending.push(childHandle)
@@ -54,30 +54,12 @@ extension Tree.Keyed where Element: Copyable {
             }
         }
 
-        // Remove pruned subtrees (in reverse to avoid invalidation issues)
+        // Remove pruned subtrees (in reverse to avoid invalidation issues). The
+        // shared `removeSubtree` default unlinks the child (O(1) via its back-key)
+        // and frees the subtree post-order.
         for (parentHandle, key) in toPrune.reversed() {
             guard let childHandle = _childHandle(of: parentHandle, key: key) else { continue }
-
-            // Remove child from parent's dictionary
-            _unlink(parent: parentHandle, key: key)
-
-            // Free the subtree (post-order: children before parents)
-            var freePending = Stack<Store.Generational.Handle>()
-            var freeOutput = Stack<Store.Generational.Handle>()
-            freePending.push(childHandle)
-
-            while !freePending.isEmpty {
-                let current = freePending.pop()!
-                freeOutput.push(current)
-                for (_, grandchild) in _children(of: current) {
-                    freePending.push(grandchild)
-                }
-            }
-
-            while !freeOutput.isEmpty {
-                let current = freeOutput.pop()!
-                _ = _remove(current)
-            }
+            try? removeSubtree(at: _position(of: childHandle))
         }
     }
 }

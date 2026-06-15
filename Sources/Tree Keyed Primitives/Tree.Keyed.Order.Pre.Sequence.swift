@@ -19,6 +19,7 @@ extension Tree.Keyed.Order.Pre {
     /// A sequence that yields values in pre-order traversal.
     ///
     /// Pre-order traversal visits the root first, then children in insertion order.
+    @frozen
     public struct Sequence {
         let tree: Tree<Element>.Keyed<Key>
     }

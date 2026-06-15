@@ -36,10 +36,9 @@ public func zip<Key: Hash.`Protocol`, A, B>(
         return result
     }
 
-    let rootDest = result._insert(
-        node: Tree<(A, B)>.Keyed<Key>.Node(
-            value: (lhs._node(lhsRoot) { $0.value }, rhs._node(rhsRoot) { $0.value })
-        )
+    let rootDest = result._insertNode(
+        (lhs._value(of: lhsRoot), rhs._value(of: rhsRoot)),
+        parent: nil
     )
     result._rootHandle = rootDest
 
@@ -59,14 +58,11 @@ public func zip<Key: Hash.`Protocol`, A, B>(
         for (key, lhsChild) in lhs._children(of: lhsHandle) {
             guard let rhsChild = rhs._childHandle(of: rhsHandle, key: key) else { continue }
 
-            let childDest = result._insert(
-                node: Tree<(A, B)>.Keyed<Key>.Node(
-                    value: (lhs._node(lhsChild) { $0.value }, rhs._node(rhsChild) { $0.value }),
-                    parentHandle: destParentHandle,
-                    parentKey: key
-                )
+            let childDest = result._insertNode(
+                (lhs._value(of: lhsChild), rhs._value(of: rhsChild)),
+                parent: destParentHandle
             )
-            result._link(parent: destParentHandle, key: key, child: childDest)
+            result._linkChild(childDest, to: destParentHandle, at: key)
 
             pending.push((lhsChild, rhsChild, childDest))
         }

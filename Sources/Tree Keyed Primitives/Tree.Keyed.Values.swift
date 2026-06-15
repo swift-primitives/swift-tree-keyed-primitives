@@ -44,7 +44,7 @@ extension Tree.Keyed where Element: Copyable {
             }
 
             if let childHandle = _childHandle(of: handle, key: key) {
-                result.append(_node(childHandle) { $0.value })
+                result.append(_value(of: childHandle))
                 currentHandle = childHandle
             } else {
                 result.append(nil)

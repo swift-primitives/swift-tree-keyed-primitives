@@ -53,7 +53,7 @@ extension Tree.Keyed.Order.Post {
         public mutating func next() -> Element? {
             guard !output.isEmpty else { return nil }
             let handle = output.pop()!
-            return tree._node(handle) { $0.value }
+            return tree._value(of: handle)
         }
     }
 }

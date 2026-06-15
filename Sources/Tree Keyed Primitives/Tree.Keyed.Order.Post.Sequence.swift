@@ -19,6 +19,7 @@ extension Tree.Keyed.Order.Post {
     /// A sequence that yields values in post-order traversal.
     ///
     /// Post-order traversal visits children in insertion order, then the root.
+    @frozen
     public struct Sequence {
         let tree: Tree<Element>.Keyed<Key>
     }

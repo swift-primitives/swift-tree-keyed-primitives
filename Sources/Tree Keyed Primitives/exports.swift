@@ -1,10 +1,12 @@
 // exports.swift
 // Re-export dependencies for consumers.
 //
-// `Node`'s public surface embeds the ordered-dictionary column
-// (`Dictionary<Shared<Hash.Entry<Key, Handle>, Hash.Indexed<Column.Heap<…>>>>.Ordered`)
-// and the generational handle (`Store.Generational.Handle`), so the full type
-// vocabulary of those spellings is re-exported alongside the tree core.
+// The keyed tree surfaces `Tree` / `Tree.Position` (the shared `Tree.Storage`
+// engine) and constrains its key on `Hash.Protocol`; the keyed-children column
+// vocabulary (`Dictionary.Ordered` / `Hash.Indexed` / `Column.Heap` / `Shared` /
+// `Store.Generational.Handle`) is now an INTERNAL detail of `__TreeKeyedLinks`, but
+// the full spelling set is re-exported for consumer convenience alongside the
+// tree core.
 
 @_exported public import Dictionary_Primitive
 @_exported public import Dictionary_Ordered_Primitive

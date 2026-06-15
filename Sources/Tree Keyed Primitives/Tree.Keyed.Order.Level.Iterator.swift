@@ -45,7 +45,7 @@ extension Tree.Keyed.Order.Level {
             guard !pending.isEmpty else { return nil }
 
             let handle = pending.dequeue()!
-            let value = tree._node(handle) { $0.value }
+            let value = tree._value(of: handle)
 
             for (_, child) in tree._children(of: handle) {
                 pending.enqueue(child)

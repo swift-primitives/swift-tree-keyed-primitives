@@ -32,14 +32,12 @@ extension Tree.Keyed where Element: Copyable {
 
         while !pending.isEmpty {
             let (sourceHandle, destParentHandle, key) = pending.pop()!
-            let newValue = transform(_node(sourceHandle) { $0.value })
+            let newValue = transform(_value(of: sourceHandle))
 
-            let handle = result._insert(
-                node: Tree<U>.Keyed<Key>.Node(value: newValue, parentHandle: destParentHandle, parentKey: key)
-            )
+            let handle = result._insertNode(newValue, parent: destParentHandle)
 
             if let destParentHandle {
-                result._link(parent: destParentHandle, key: key!, child: handle)
+                result._linkChild(handle, to: destParentHandle, at: key!)
             } else {
                 result._rootHandle = handle
             }
@@ -156,19 +154,17 @@ extension Tree.Keyed where Element: Copyable {
                 newValue = broadcastValue
                 shouldBroadcast = true
             } else {
-                guard let transformed = try transform(path, _node(sourceHandle) { $0.value }) else {
+                guard let transformed = try transform(path, _value(of: sourceHandle)) else {
                     continue
                 }
                 newValue = transformed.0
                 shouldBroadcast = transformed.recursivelyApply
             }
 
-            let handle = result._insert(
-                node: Tree<U>.Keyed<Key>.Node(value: newValue, parentHandle: destParentHandle, parentKey: key)
-            )
+            let handle = result._insertNode(newValue, parent: destParentHandle)
 
             if let destParentHandle {
-                result._link(parent: destParentHandle, key: key!, child: handle)
+                result._linkChild(handle, to: destParentHandle, at: key!)
             } else {
                 result._rootHandle = handle
             }
@@ -205,9 +201,9 @@ extension Tree.Keyed where Element: Copyable {
         var result = Tree<U>.Keyed<Key>()
         guard let rootHandle = _rootHandle else { return result }
 
-        guard let rootValue = transform(_node(rootHandle) { $0.value }) else { return result }
+        guard let rootValue = transform(_value(of: rootHandle)) else { return result }
 
-        let rootDest = result._insert(node: Tree<U>.Keyed<Key>.Node(value: rootValue))
+        let rootDest = result._insertNode(rootValue, parent: nil)
         result._rootHandle = rootDest
 
         var pending = Stack<(source: Store.Generational.Handle, destParent: Store.Generational.Handle)>()
@@ -217,12 +213,10 @@ extension Tree.Keyed where Element: Copyable {
             let (sourceHandle, destParentHandle) = pending.pop()!
 
             for (childKey, childHandle) in _children(of: sourceHandle) {
-                guard let childValue = transform(_node(childHandle) { $0.value }) else { continue }
+                guard let childValue = transform(_value(of: childHandle)) else { continue }
 
-                let childDest = result._insert(
-                    node: Tree<U>.Keyed<Key>.Node(value: childValue, parentHandle: destParentHandle, parentKey: childKey)
-                )
-                result._link(parent: destParentHandle, key: childKey, child: childDest)
+                let childDest = result._insertNode(childValue, parent: destParentHandle)
+                result._linkChild(childDest, to: destParentHandle, at: childKey)
 
                 pending.push((childHandle, childDest))
             }
@@ -295,19 +289,17 @@ extension Tree.Keyed where Element: Copyable {
                 newValue = broadcastValue
                 shouldBroadcast = true
             } else {
-                guard let transformed = try await transform(path, _node(sourceHandle) { $0.value }) else {
+                guard let transformed = try await transform(path, _value(of: sourceHandle)) else {
                     continue
                 }
                 newValue = transformed.0
                 shouldBroadcast = transformed.recursivelyApply
             }
 
-            let handle = result._insert(
-                node: Tree<U>.Keyed<Key>.Node(value: newValue, parentHandle: destParentHandle, parentKey: key)
-            )
+            let handle = result._insertNode(newValue, parent: destParentHandle)
 
             if let destParentHandle {
-                result._link(parent: destParentHandle, key: key!, child: handle)
+                result._linkChild(handle, to: destParentHandle, at: key!)
             } else {
                 result._rootHandle = handle
             }

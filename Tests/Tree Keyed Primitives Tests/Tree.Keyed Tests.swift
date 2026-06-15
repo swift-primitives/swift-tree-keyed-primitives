@@ -344,30 +344,6 @@ extension TreeKeyedTests.Unit {
         #expect(result == [0, 1, 2, 3, 4])
     }
 
-    // MARK: - Map / CompactMap
-
-    @Test
-    func `map produces flat array in pre-order`() throws {
-        var tree = Tree<Int>.Keyed<String>()
-        let root = try tree.insert(1, at: .root)
-        _ = try tree.insert(2, at: .child(of: root, key: "a"))
-        _ = try tree.insert(3, at: .child(of: root, key: "b"))
-
-        let result = tree.map { $0 * 10 }
-        #expect(result == [10, 20, 30])
-    }
-
-    @Test
-    func `compactMap filters nil values from flat array`() throws {
-        var tree = Tree<Int>.Keyed<String>()
-        let root = try tree.insert(1, at: .root)
-        _ = try tree.insert(2, at: .child(of: root, key: "a"))
-        _ = try tree.insert(3, at: .child(of: root, key: "b"))
-
-        let result = tree.compactMap { $0 > 1 ? $0 : nil }
-        #expect(result == [2, 3])
-    }
-
     // MARK: - MapValues
 
     @Test
@@ -413,11 +389,9 @@ extension TreeKeyedTests.Unit {
     @Test
     func `error descriptions are non-empty`() {
         let errors: [__TreeKeyedError<String>] = [
-            .empty,
             .invalidPosition,
             .rootOccupied,
             .keyOccupied("test"),
-            .keyNotFound("test"),
             .cannotRemoveNonLeaf,
         ]
 
@@ -495,7 +469,9 @@ extension TreeKeyedTests.EdgeCase {
         #expect {
             try tree.remove(at: root)
         } throws: { error in
-            guard let e = error as? __TreeKeyedError<String>,
+            // `remove` is the shared `Tree.Protocol` default → throws `__TreeError`
+            // (it carries no key, so it needs no keyed error refinement).
+            guard let e = error as? __TreeError,
                 case .cannotRemoveNonLeaf = e
             else { return false }
             return true
@@ -810,41 +786,6 @@ extension TreeKeyedTests.Unit {
         #expect(result.value(at: ["b", "z"]) == nil)
     }
 
-    // MARK: map / compactMap / flatMap
-
-    @Test
-    func `map with key path produces array of transformed elements`() throws {
-        let tree = try makeGraphParityTree()
-
-        let result: [String] = tree.map { (path: [String], value: Int) -> String in
-            "\(path.count):\(value)"
-        }
-
-        #expect(result == ["0:0", "1:1", "2:10", "2:11", "1:2", "2:20"])
-    }
-
-    @Test
-    func `compactMap with key path filters nil results`() throws {
-        let tree = try makeGraphParityTree()
-
-        let result: [Int] = tree.compactMap { (_: [String], value: Int) -> Int? in
-            value > 5 ? value : nil
-        }
-
-        #expect(result == [10, 11, 20])
-    }
-
-    @Test
-    func `flatMap concatenates sequence results`() throws {
-        let tree = try makeGraphParityTree()
-
-        let result: [Int] = tree.flatMap { (_: [String], value: Int) -> [Int] in
-            [value, value * 100]
-        }
-
-        #expect(result == [0, 0, 1, 100, 10, 1000, 11, 1100, 2, 200, 20, 2000])
-    }
-
     // MARK: values(along:)
 
     @Test
@@ -1125,10 +1066,6 @@ extension TreeKeyedTests.Integration {
         // Optional chaining mutation (like graph[keyPath]?.mutate())
         tree[["suite", "testA"]]?.append(" (modified)")
         #expect(tree[["suite", "testA"]] == "test A (modified)")
-
-        // compactMap to extract non-nil values (like graph.compactMap(\.value))
-        let values = tree.compactMap { (_: [String], value: String?) -> String? in value }
-        #expect(values.count == 3)
     }
 
     @Test
