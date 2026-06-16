@@ -37,6 +37,8 @@ let package = Package(
         .package(url: "https://github.com/swift-primitives/swift-queue-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-iterator-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-sequence-primitives.git", branch: "main"),
+        // R1 W4: forEach.child / forEach.path fluent accessors via Property<Tag,Base>.Borrow.
+        .package(url: "https://github.com/swift-primitives/swift-property-primitives.git", branch: "main"),
     ],
     targets: [
 
@@ -64,6 +66,7 @@ let package = Package(
                 .product(name: "Iterator Chunk Primitives", package: "swift-iterator-primitives"),
                 .product(name: "Iterable", package: "swift-iterator-primitives"),
                 .product(name: "Sequence Primitives", package: "swift-sequence-primitives"),
+                .product(name: "Property Primitives", package: "swift-property-primitives"),
             ]
         ),
 

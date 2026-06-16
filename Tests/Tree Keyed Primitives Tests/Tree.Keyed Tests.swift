@@ -78,7 +78,7 @@ extension TreeKeyedTests.Unit {
         let removed = try tree.remove(at: child)
         #expect(removed == 1)
         #expect(tree.count == 1)
-        #expect(tree.child(of: root, key: "child") == nil)
+        #expect(tree.child.at("child", of: root) == nil)
     }
 
     @Test
@@ -92,7 +92,7 @@ extension TreeKeyedTests.Unit {
         #expect(tree.count == 4)
         try tree.removeSubtree(at: child)
         #expect(tree.count == 1)
-        #expect(tree.child(of: root, key: "a") == nil)
+        #expect(tree.child.at("a", of: root) == nil)
     }
 
     // MARK: - Clear
@@ -155,9 +155,9 @@ extension TreeKeyedTests.Unit {
         let left = try tree.insert(1, at: .child(of: root, key: "left"))
         let right = try tree.insert(2, at: .child(of: root, key: "right"))
 
-        #expect(tree.child(of: root, key: "left") == left)
-        #expect(tree.child(of: root, key: "right") == right)
-        #expect(tree.child(of: root, key: "nonexistent") == nil)
+        #expect(tree.child.at("left", of: root) == left)
+        #expect(tree.child.at("right", of: root) == right)
+        #expect(tree.child.at("nonexistent", of: root) == nil)
     }
 
     @Test
@@ -185,12 +185,12 @@ extension TreeKeyedTests.Unit {
     func `childCount returns number of direct children`() throws {
         var tree = Tree<Int>.Keyed<String>()
         let root = try tree.insert(0, at: .root)
-        #expect(tree.childCount(of: root) == 0)
+        #expect(tree.child.count(of: root) == 0)
 
         _ = try tree.insert(1, at: .child(of: root, key: "a"))
         _ = try tree.insert(2, at: .child(of: root, key: "b"))
         _ = try tree.insert(3, at: .child(of: root, key: "c"))
-        #expect(tree.childCount(of: root) == 3)
+        #expect(tree.child.count(of: root) == 3)
     }
 
     @Test
@@ -203,7 +203,7 @@ extension TreeKeyedTests.Unit {
 
         var keys: [String] = []
         var values: [Int] = []
-        tree.forEachChild(of: root) { key, pos in
+        tree.children(of: root) { key, pos in
             keys.append(key)
             if let v = tree.peek(at: pos) {
                 values.append(v)
@@ -297,7 +297,7 @@ extension TreeKeyedTests.Unit {
     func `forEachPreOrder visits nodes depth-first root-first`() throws {
         let tree = try makeTestTree()
         var result: [Int] = []
-        tree.forEachPreOrder { value in
+        tree.forEach.preOrder { value in
             result.append(value)
         }
         #expect(result == [0, 1, 3, 4, 2])
@@ -307,7 +307,7 @@ extension TreeKeyedTests.Unit {
     func `forEachPostOrder visits nodes depth-first children-first`() throws {
         let tree = try makeTestTree()
         var result: [Int] = []
-        tree.forEachPostOrder { value in
+        tree.forEach.postOrder { value in
             result.append(value)
         }
         #expect(result == [3, 4, 1, 2, 0])
@@ -317,7 +317,7 @@ extension TreeKeyedTests.Unit {
     func `forEachLevelOrder visits nodes breadth-first`() throws {
         let tree = try makeTestTree()
         var result: [Int] = []
-        tree.forEachLevelOrder { value in
+        tree.forEach.levelOrder { value in
             result.append(value)
         }
         #expect(result == [0, 1, 2, 3, 4])
@@ -521,7 +521,7 @@ extension TreeKeyedTests.EdgeCase {
     func `empty tree traversal produces no values`() {
         let tree = Tree<Int>.Keyed<String>()
         var count = 0
-        tree.forEachPreOrder { _ in count += 1 }
+        tree.forEach.preOrder { _ in count += 1 }
         #expect(count == 0)
         #expect(tree.preOrder.collect().isEmpty)
     }
@@ -581,7 +581,7 @@ extension TreeKeyedTests.Integration {
         #expect(zipped.count == 3)
 
         var values: [(Int, String)] = []
-        zipped.forEachPreOrder { pair in
+        zipped.forEach.preOrder { pair in
             values.append(pair)
         }
         #expect(values.count == 3)
@@ -626,8 +626,8 @@ extension TreeKeyedTests.Integration {
         tree.prune { $0 >= 10 }
 
         #expect(tree.count == 3)
-        #expect(tree.child(of: root, key: "b") == nil)
-        #expect(tree.child(of: root, key: "a") != nil)
+        #expect(tree.child.at("b", of: root) == nil)
+        #expect(tree.child.at("a", of: root) != nil)
     }
 
     @Test

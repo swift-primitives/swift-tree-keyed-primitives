@@ -70,7 +70,7 @@ extension Tree.Keyed where Element: Equatable, Key: Copyable {
                 for (key, oldChildPos) in oldChildren {
                     let childPath = path + [key]
 
-                    if let newChildPos = new.child(of: newPos, key: key) {
+                    if let newChildPos = new.child.at(key, of: newPos) {
                         // Key in both trees — compare values, recurse
                         if let oldValue = old.peek(at: oldChildPos),
                             let newValue = new.peek(at: newChildPos),
@@ -93,7 +93,7 @@ extension Tree.Keyed where Element: Equatable, Key: Copyable {
 
                 // Process children present only in new
                 for (key, newChildPos) in newChildren {
-                    if old.child(of: oldPos, key: key) == nil {
+                    if old.child.at(key, of: oldPos) == nil {
                         let childPath = path + [key]
                         _collectSubtree(
                             of: new,

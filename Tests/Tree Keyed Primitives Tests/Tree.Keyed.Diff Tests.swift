@@ -174,7 +174,7 @@ extension TreeKeyedDiffTests.Integration {
         try new.update(99, at: ["a", "y"])
 
         let bPos = new.position(at: ["b"])!
-        let zPos = new.child(of: bPos, key: "z")!
+        let zPos = new.child.at("z", of: bPos)!
         _ = try new.remove(at: zPos)
 
         _ = try new.insert(50, at: .child(of: bPos, key: "q"))
