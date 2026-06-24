@@ -11,7 +11,7 @@
 
 public import Store_Primitive
 public import Storage_Generational_Primitives
-public import Tree_Primitives_Core
+public import Tree_Primitives
 
 // MARK: - Key Path Operations
 

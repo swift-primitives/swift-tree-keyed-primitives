@@ -47,7 +47,7 @@ let package = Package(
         .target(
             name: "Tree Keyed Primitives",
             dependencies: [
-                .product(name: "Tree Primitives Core", package: "swift-tree-primitives"),
+                .product(name: "Tree Primitives", package: "swift-tree-primitives"),
                 .product(name: "Dictionary Primitive", package: "swift-dictionary-primitives"),
                 .product(name: "Dictionary Ordered Primitive", package: "swift-dictionary-ordered-primitives"),
                 .product(name: "Dictionary Ordered Primitives", package: "swift-dictionary-ordered-primitives"),

@@ -13,7 +13,7 @@ public import Dictionary_Ordered_Primitives
 public import Index_Primitives
 public import Storage_Generational_Primitives
 public import Store_Primitive
-public import Tree_Primitives_Core
+public import Tree_Primitives
 
 /// A dynamically-growing keyed tree with dictionary-indexed children.
 ///

@@ -18,4 +18,4 @@
 @_exported public import Shared_Primitive
 @_exported public import Store_Primitive
 @_exported public import Storage_Generational_Primitives
-@_exported public import Tree_Primitives_Core
+@_exported public import Tree_Primitives
