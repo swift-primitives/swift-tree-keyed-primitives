@@ -15,7 +15,7 @@ public import Tree_Primitives
 
 // MARK: - Key Path Operations
 
-extension Tree.Keyed where Element: ~Copyable {
+extension Tree where S: __TreeKeyedStorage {
 
     /// Reconstructs the key path from the root to the given position.
     ///
@@ -68,7 +68,7 @@ extension Tree.Keyed where Element: ~Copyable {
 
 // MARK: - Key Path Operations (Copyable)
 
-extension Tree.Keyed where Element: Copyable {
+extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// Returns the value at the given key path.
     ///
@@ -139,7 +139,7 @@ extension Tree.Keyed where Element: Copyable {
         // Insert or update terminal node
         let terminalKey = keyPath.last!
         if let existingChild = _childHandle(of: currentHandle, key: terminalKey) {
-            _storage.withElementMut(at: existingChild) { $0 = value }
+            _setValue(at: existingChild, value)
             return _position(of: existingChild)
         } else {
             let handle = _insertNode(value, parent: currentHandle)

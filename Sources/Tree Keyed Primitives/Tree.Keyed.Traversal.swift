@@ -9,27 +9,29 @@
 //
 // ===----------------------------------------------------------------------===//
 
+public import Tree_Primitives
+
 // MARK: - Traversal Sequences (Copyable values only)
 //
-// The closure-based `forEachPreOrder` / `forEachPostOrder` / `forEachLevelOrder`
-// are INHERITED from the shared `Tree.Protocol` defaults (shape-agnostic). This
-// file keeps only the `Iterable`/`Sequenceable` traversal VIEWS — the canonical
-// collection path (`Array(tree.preOrder)` / `tree.preOrder.reduce(into:)`).
+// The closure-based `forEach.preOrder { }` / `.postOrder { }` / `.levelOrder { }` are
+// INHERITED from the shared tree-core engine (shape-agnostic). These properties surface
+// the `Iterable`/`Sequenceable` traversal VIEWS — the canonical collection path
+// (`Array(tree.preOrder)` / `tree.preOrder.reduce(into:)`).
 
-extension Tree.Keyed where Element: Copyable {
+extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// A sequence that yields values in pre-order (root, then children in insertion order).
-    public var preOrder: Order.Pre.Sequence {
-        Order.Pre.Sequence(tree: self)
+    public var preOrder: __TreeKeyedOrder.Pre.Sequence<S> {
+        __TreeKeyedOrder.Pre.Sequence<S>(tree: self)
     }
 
     /// A sequence that yields values in post-order (children in insertion order, then root).
-    public var postOrder: Order.Post.Sequence {
-        Order.Post.Sequence(tree: self)
+    public var postOrder: __TreeKeyedOrder.Post.Sequence<S> {
+        __TreeKeyedOrder.Post.Sequence<S>(tree: self)
     }
 
     /// A sequence that yields values in level-order (breadth-first).
-    public var levelOrder: Order.Level.Sequence {
-        Order.Level.Sequence(tree: self)
+    public var levelOrder: __TreeKeyedOrder.Level.Sequence<S> {
+        __TreeKeyedOrder.Level.Sequence<S>(tree: self)
     }
 }

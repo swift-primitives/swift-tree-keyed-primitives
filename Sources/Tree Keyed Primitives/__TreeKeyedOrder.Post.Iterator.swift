@@ -12,24 +12,27 @@
 public import Store_Primitive
 public import Storage_Generational_Primitives
 public import Stack_Primitive
+public import Tree_Primitives
 internal import Stack_Primitives
 internal import Iterator_Primitive
 internal import Iterator_Protocol
 
-extension Tree.Keyed.Order.Post {
+extension __TreeKeyedOrder.Post {
 
-    /// An iterator for post-order traversal.
+    /// An iterator for post-order traversal (children in insertion order, then root).
     ///
     /// Uses a two-stack approach: first builds reverse post-order via pre-order,
     /// then yields values in the correct order.
-    public struct Iterator: Iterator_Primitive.Iterator.`Protocol` {
+    public struct Iterator<S: __TreeKeyedStorage>: Iterator_Primitive.Iterator.`Protocol`
+    where S.Element: Copyable {
         @usableFromInline
-        let tree: Tree<Element>.Keyed<Key>
+        let tree: Tree<S>
 
         @usableFromInline
         var output: Stack<Store.Generational.Handle>
 
-        init(tree: Tree<Element>.Keyed<Key>) {
+        @usableFromInline
+        init(tree: Tree<S>) {
             self.tree = tree
             self.output = Stack<Store.Generational.Handle>()
 
@@ -50,7 +53,7 @@ extension Tree.Keyed.Order.Post {
         }
 
         @inlinable
-        public mutating func next() -> Element? {
+        public mutating func next() -> S.Element? {
             guard !output.isEmpty else { return nil }
             let handle = output.pop()!
             return tree._value(of: handle)

@@ -11,7 +11,7 @@
 
 // MARK: - Navigation
 
-extension Tree.Keyed where Element: ~Copyable {
+extension Tree where S: __TreeKeyedStorage {
 
     // Child-by-key navigation is the shared `tree.child.at(key, of:)` view member
     // (R1 W4 [API-NAME-002]; tree-core `__TreeChild.swift`) — `Address == Key`, so the

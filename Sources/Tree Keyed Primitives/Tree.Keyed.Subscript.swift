@@ -12,7 +12,7 @@
 
 // MARK: - Subscript (Read-Only)
 
-extension Tree.Keyed where Element: Copyable {
+extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// Returns the value at the given key path, or nil if the path doesn't resolve.
     ///
@@ -39,7 +39,7 @@ extension Tree.Keyed where Element: Copyable {
 
 // MARK: - Subscript (Sparse)
 
-extension Tree.Keyed where Element: Copyable {
+extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// Gets or sets the value at the given key path in a sparse tree.
     ///
@@ -53,7 +53,7 @@ extension Tree.Keyed where Element: Copyable {
     /// - Returns: The value at the key path (which may itself be nil), or nil if the node doesn't exist.
     /// - Complexity: O(d) where d is the length of the key path.
     @inlinable
-    public subscript<U>(keyPath: [Key]) -> Value where Value == U? {
+    public subscript<U>(keyPath: [Key]) -> U? where Value == U? {
         get {
             value(at: keyPath) ?? nil
         }
@@ -62,7 +62,7 @@ extension Tree.Keyed where Element: Copyable {
                 if root != nil {
                     _ = try? update(newValue, at: keyPath)
                 } else {
-                    _ = try? insert(newValue, at: .root)
+                    _ = try? insert(newValue, at: __TreeKeyedInsertPosition<Key>.root)
                 }
             } else {
                 _ = try? insert(newValue, at: keyPath)
@@ -74,7 +74,7 @@ extension Tree.Keyed where Element: Copyable {
     ///
     /// Variadic overload of ``subscript(_:)-2k3j``.
     @inlinable
-    public subscript<U>(keyPath: Key...) -> Value where Value == U? {
+    public subscript<U>(keyPath: Key...) -> U? where Value == U? {
         get { self[keyPath] }
         set { self[keyPath] = newValue }
     }
@@ -82,7 +82,7 @@ extension Tree.Keyed where Element: Copyable {
 
 // MARK: - Sparse Insert Convenience
 
-extension Tree.Keyed where Element: Copyable {
+extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// Inserts a value at the given key path, creating intermediate nodes with nil values.
     ///
@@ -100,7 +100,7 @@ extension Tree.Keyed where Element: Copyable {
     @inlinable
     @discardableResult
     public mutating func insert<U>(
-        _ value: Value,
+        _ value: U?,
         at keyPath: [Key]
     ) throws(__TreeKeyedError<Key>) -> Tree.Position where Value == U? {
         if keyPath.isEmpty {
@@ -108,7 +108,7 @@ extension Tree.Keyed where Element: Copyable {
                 try update(value, at: keyPath)
                 return root!
             } else {
-                return try insert(value, at: .root)
+                return try insert(value, at: __TreeKeyedInsertPosition<Key>.root)
             }
         }
         return try insert(value, at: keyPath, intermediateValue: { _ in nil })

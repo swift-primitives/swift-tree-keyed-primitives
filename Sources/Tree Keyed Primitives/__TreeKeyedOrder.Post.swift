@@ -9,10 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Tree.Keyed.Order {
+extension __TreeKeyedOrder {
 
-    /// Namespace for level-order traversal types.
+    /// Namespace for post-order traversal types.
     ///
-    /// Level-order traversal visits nodes breadth-first (by level).
-    public enum Level {}
+    /// Post-order traversal visits children in insertion order, then the root.
+    public enum Post {}
 }

@@ -9,13 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Tree.Keyed where Element: Copyable {
+extension __TreeKeyedOrder {
 
-    /// Namespace for traversal order sequences.
+    /// Namespace for level-order traversal types.
     ///
-    /// Provides access to tree traversal sequences organized by traversal order:
-    /// - ``Pre``: Pre-order traversal (root, then children in insertion order)
-    /// - ``Post``: Post-order traversal (children in insertion order, then root)
-    /// - ``Level``: Level-order traversal (breadth-first)
-    public enum Order {}
+    /// Level-order traversal visits nodes breadth-first (by level).
+    public enum Level {}
 }

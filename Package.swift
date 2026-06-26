@@ -23,6 +23,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/swift-primitives/swift-tree-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-index-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-dictionary-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-dictionary-ordered-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-hash-primitives.git", branch: "main"),
@@ -48,6 +49,7 @@ let package = Package(
             name: "Tree Keyed Primitives",
             dependencies: [
                 .product(name: "Tree Primitives", package: "swift-tree-primitives"),
+                .product(name: "Index Primitives", package: "swift-index-primitives"),
                 .product(name: "Dictionary Primitive", package: "swift-dictionary-primitives"),
                 .product(name: "Dictionary Ordered Primitive", package: "swift-dictionary-ordered-primitives"),
                 .product(name: "Dictionary Ordered Primitives", package: "swift-dictionary-ordered-primitives"),

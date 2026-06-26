@@ -15,23 +15,25 @@ public import Shared_Primitive
 public import Column_Primitives
 public import Buffer_Ring_Primitive
 public import Queue_Primitives
+public import Tree_Primitives
 internal import Iterator_Primitive
 internal import Iterator_Protocol
 
-extension Tree.Keyed.Order.Level {
+extension __TreeKeyedOrder.Level {
 
-    /// An iterator for level-order traversal.
-    public struct Iterator: Iterator_Primitive.Iterator.`Protocol` {
+    /// An iterator for level-order (breadth-first) traversal.
+    public struct Iterator<S: __TreeKeyedStorage>: Iterator_Primitive.Iterator.`Protocol`
+    where S.Element: Copyable {
         @usableFromInline
-        let tree: Tree<Element>.Keyed<Key>
+        let tree: Tree<S>
 
-        /// The pending-node FIFO on the `Shared` ring column — the CoW flavor is
-        /// required here (not the move-only direct ring) so the iterator struct
-        /// itself stays `Copyable`, preserving its pre-reshape shape.
+        /// The pending-node FIFO on the `Shared` ring column — the CoW flavor keeps the
+        /// iterator struct itself `Copyable`.
         @usableFromInline
         var pending: Queue<Shared<Store.Generational.Handle, Column.Ring<Store.Generational.Handle>>>
 
-        init(tree: Tree<Element>.Keyed<Key>) {
+        @usableFromInline
+        init(tree: Tree<S>) {
             self.tree = tree
             self.pending = Queue<Shared<Store.Generational.Handle, Column.Ring<Store.Generational.Handle>>>()
 
@@ -41,7 +43,7 @@ extension Tree.Keyed.Order.Level {
         }
 
         @inlinable
-        public mutating func next() -> Element? {
+        public mutating func next() -> S.Element? {
             guard !pending.isEmpty else { return nil }
 
             let handle = pending.dequeue()!

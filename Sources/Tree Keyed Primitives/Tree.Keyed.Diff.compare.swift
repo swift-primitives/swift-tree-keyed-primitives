@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Tree.Keyed where Element: Equatable, Key: Copyable {
+extension Tree where S: __TreeKeyedStorage, S.Element: Equatable {
     /// Top-down keyed comparison — walks both trees in parallel by key.
     ///
     /// Produces a diff describing all structural and value changes between
@@ -111,7 +111,7 @@ extension Tree.Keyed where Element: Equatable, Key: Copyable {
 
 // MARK: - Subtree Collection
 
-extension Tree.Keyed where Element: Copyable, Key: Copyable {
+extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     /// Pre-order traversal of a subtree, emitting each node's path and value.
     @usableFromInline
     static func _collectSubtree(

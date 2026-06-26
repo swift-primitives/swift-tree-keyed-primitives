@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Tree.Keyed.Order {
+extension __TreeKeyedOrder {
 
     /// Namespace for pre-order traversal types.
     ///

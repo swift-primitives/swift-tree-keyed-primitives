@@ -12,21 +12,24 @@
 public import Store_Primitive
 public import Storage_Generational_Primitives
 public import Stack_Primitive
+public import Tree_Primitives
 internal import Stack_Primitives
 internal import Iterator_Primitive
 internal import Iterator_Protocol
 
-extension Tree.Keyed.Order.Pre {
+extension __TreeKeyedOrder.Pre {
 
-    /// An iterator for pre-order traversal.
-    public struct Iterator: Iterator_Primitive.Iterator.`Protocol` {
+    /// An iterator for pre-order traversal (root, then children in insertion order).
+    public struct Iterator<S: __TreeKeyedStorage>: Iterator_Primitive.Iterator.`Protocol`
+    where S.Element: Copyable {
         @usableFromInline
-        let tree: Tree<Element>.Keyed<Key>
+        let tree: Tree<S>
 
         @usableFromInline
         var pending: Stack<Store.Generational.Handle>
 
-        init(tree: Tree<Element>.Keyed<Key>) {
+        @usableFromInline
+        init(tree: Tree<S>) {
             self.tree = tree
             self.pending = Stack<Store.Generational.Handle>()
             if let rootHandle = tree._rootHandle {
@@ -35,7 +38,7 @@ extension Tree.Keyed.Order.Pre {
         }
 
         @inlinable
-        public mutating func next() -> Element? {
+        public mutating func next() -> S.Element? {
             guard !pending.isEmpty else { return nil }
 
             let handle = pending.pop()!

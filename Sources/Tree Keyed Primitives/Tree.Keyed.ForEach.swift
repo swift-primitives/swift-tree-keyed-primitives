@@ -15,7 +15,7 @@ public import Stack_Primitive
 
 // MARK: - ForEach with Key Path
 
-extension Tree.Keyed where Element: Copyable {
+extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// Iterates over all nodes in pre-order, passing the key path and value to the closure.
     ///

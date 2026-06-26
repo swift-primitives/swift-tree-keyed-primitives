@@ -14,7 +14,7 @@ public import Storage_Generational_Primitives
 
 // MARK: - Values Along Key Path
 
-extension Tree.Keyed where Element: Copyable {
+extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// Returns values at each step along the key path.
     ///
