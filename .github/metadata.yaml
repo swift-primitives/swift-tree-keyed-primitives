@@ -1,5 +1,5 @@
 # .github/metadata.yaml
-description: "Keyed-tree types for Swift."
+description: "Arena-backed, dictionary-keyed tree storage with O(1) child lookup, token-validated positions, and structural diffing for Swift."
 topics:
   - primitives
   - tree
