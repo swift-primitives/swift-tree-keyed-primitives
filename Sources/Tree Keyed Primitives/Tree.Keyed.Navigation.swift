@@ -11,7 +11,7 @@
 
 // MARK: - Navigation
 
-extension Tree where S: __TreeKeyedStorage {
+extension __Tree where S: __TreeKeyedStorage {
 
     // Child-by-key navigation is the shared `tree.child.at(key, of:)` view member
     // (R1 W4 [API-NAME-002]; tree-core `__TreeChild.swift`) — `Address == Key`, so the
@@ -22,7 +22,7 @@ extension Tree where S: __TreeKeyedStorage {
     /// - Parameter position: The position of the node.
     /// - Returns: The parent key, or `nil` if the node is the root or position is invalid.
     @inlinable
-    public func key(of position: Tree.Position) -> Key? {
+    public func key(of position: Position) -> Key? {
         guard let handle = _liveHandle(position) else { return nil }
         return _parentKey(of: handle)
     }
@@ -41,9 +41,9 @@ extension Tree where S: __TreeKeyedStorage {
     /// - Parameter position: The position of the parent node.
     /// - Returns: An array of (key, position) pairs in insertion order, or nil if position is invalid.
     @inlinable
-    public func children(of position: Tree.Position) -> [(key: Key, position: Tree.Position)]? {
+    public func children(of position: Position) -> [(key: Key, position: Position)]? {
         guard let handle = _liveHandle(position) else { return nil }
-        var result: [(key: Key, position: Tree.Position)] = []
+        var result: [(key: Key, position: Position)] = []
         for (key, childHandle) in _children(of: handle) {
             result.append((key, _position(of: childHandle)))
         }
@@ -59,8 +59,8 @@ extension Tree where S: __TreeKeyedStorage {
     ///   - body: A closure called with each child's key and position.
     @inlinable
     public func children(
-        of position: Tree.Position,
-        _ body: (Key, Tree.Position) -> Void
+        of position: Position,
+        _ body: (Key, Position) -> Void
     ) {
         guard let handle = _liveHandle(position) else { return }
         for (key, childHandle) in _children(of: handle) {

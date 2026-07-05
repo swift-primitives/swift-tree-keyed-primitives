@@ -15,7 +15,7 @@ public import Stack_Primitive
 
 // MARK: - Subtree Extraction
 
-extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
+extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// Returns a deep copy of the subtree rooted at the given key path.
     ///
@@ -32,11 +32,11 @@ extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     ///   doesn't resolve.
     /// - Complexity: O(d + n) where d is key path length, n is subtree node count.
     @inlinable
-    public func subtree(at keyPath: some Swift.Sequence<Key>) -> TreeKeyed<Value, Key>? {
+    public func subtree(at keyPath: some Swift.Sequence<Key>) -> Tree<Value>.Keyed<Key>? {
         guard let pos = position(at: keyPath) else { return nil }
         guard let sourceHandle = _liveHandle(pos) else { return nil }
 
-        var result = TreeKeyed<Value, Key>()
+        var result = Tree<Value>.Keyed<Key>()
 
         let rootDest = result._insertNode(_value(of: sourceHandle), parent: nil)
         result._rootHandle = rootDest

@@ -9,7 +9,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension Tree where S: __TreeKeyedStorage, S.Element: Equatable {
+extension __Tree where S: __TreeKeyedStorage, S.Element: Equatable {
     /// Top-down keyed comparison — walks both trees in parallel by key.
     ///
     /// Produces a diff describing all structural and value changes between
@@ -57,8 +57,8 @@ extension Tree where S: __TreeKeyedStorage, S.Element: Equatable {
             // Iterative parallel walk
             var pending:
                 [(
-                    oldPos: Tree.Position,
-                    newPos: Tree.Position,
+                    oldPos: Position,
+                    newPos: Position,
                     path: [Key]
                 )] = [(oldRoot, newRoot, [])]
 
@@ -111,16 +111,16 @@ extension Tree where S: __TreeKeyedStorage, S.Element: Equatable {
 
 // MARK: - Subtree Collection
 
-extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
+extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     /// Pre-order traversal of a subtree, emitting each node's path and value.
     @usableFromInline
     static func _collectSubtree(
         of tree: borrowing Self,
-        at position: Tree.Position,
+        at position: Position,
         path: [Key],
         emit: ([Key], Value) -> Void
     ) {
-        var pending: [(position: Tree.Position, path: [Key])] = [(position, path)]
+        var pending: [(position: Position, path: [Key])] = [(position, path)]
 
         while let (pos, currentPath) = pending.popLast() {
             if let value = tree.peek(at: pos) {

@@ -27,9 +27,9 @@ public import Tree_Primitives
 //   • `_children(of:)` — the node's children as ordered `(key, handle)` pairs (the source
 //     for `children(of:)`, `mapValues`, `prune`, `subtree`, `diff`, `zip`).
 //
-// `Tree<S>`'s keyed-specific extensions constrain on this capability
-// (`extension Tree where S: __TreeKeyedStorage`) and reach the column through the public
-// `Tree<S>._storage` accessor (the tree-core seam). Hoisted per [API-EXC-001].
+// The carrier's keyed-specific extensions constrain on this capability
+// (`extension __Tree where S: __TreeKeyedStorage`) and reach the column through the
+// public `__Tree<S>._storage` accessor (the tree-core seam). Hoisted per [API-EXC-001].
 
 /// The keyed storage-column capability: `__TreeStorage` with a key address, plus the two
 /// reverse-key reads the keyed tree's key-path surface needs.

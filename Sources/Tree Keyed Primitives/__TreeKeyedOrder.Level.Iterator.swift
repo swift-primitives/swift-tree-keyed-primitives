@@ -25,7 +25,7 @@ extension __TreeKeyedOrder.Level {
     public struct Iterator<S: __TreeKeyedStorage>: Iterator_Primitive.Iterator.`Protocol`
     where S.Element: Copyable {
         @usableFromInline
-        let tree: Tree<S>
+        let tree: __Tree<S>
 
         /// The pending-node FIFO on the `Shared` ring column — the CoW flavor keeps the
         /// iterator struct itself `Copyable`.
@@ -33,7 +33,7 @@ extension __TreeKeyedOrder.Level {
         var pending: __Queue<Ownership.Shared<Store.Generational.Handle, Column.Ring<Store.Generational.Handle>>>
 
         @usableFromInline
-        init(tree: Tree<S>) {
+        init(tree: __Tree<S>) {
             self.tree = tree
             self.pending = __Queue<Ownership.Shared<Store.Generational.Handle, Column.Ring<Store.Generational.Handle>>>()
 

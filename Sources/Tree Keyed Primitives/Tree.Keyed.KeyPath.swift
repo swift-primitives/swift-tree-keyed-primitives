@@ -15,7 +15,7 @@ public import Tree_Primitives
 
 // MARK: - Key Path Operations
 
-extension Tree where S: __TreeKeyedStorage {
+extension __Tree where S: __TreeKeyedStorage {
 
     /// Reconstructs the key path from the root to the given position.
     ///
@@ -26,7 +26,7 @@ extension Tree where S: __TreeKeyedStorage {
     ///   Returns an empty array for the root node.
     /// - Complexity: O(d) where d is the depth of the node.
     @inlinable
-    public func keyPath(to position: Tree.Position) -> [Key]? {
+    public func keyPath(to position: Position) -> [Key]? {
         guard let handle = _liveHandle(position) else { return nil }
 
         var path: [Key] = []
@@ -51,7 +51,7 @@ extension Tree where S: __TreeKeyedStorage {
     ///   or the tree is empty.
     /// - Complexity: O(d) where d is the length of the key path.
     @inlinable
-    public func position(at keyPath: some Swift.Sequence<Key>) -> Tree.Position? {
+    public func position(at keyPath: some Swift.Sequence<Key>) -> Position? {
         guard let rootHandle = _rootHandle else { return nil }
 
         var current = rootHandle
@@ -68,7 +68,7 @@ extension Tree where S: __TreeKeyedStorage {
 
 // MARK: - Key Path Operations (Copyable)
 
-extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
+extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// Returns the value at the given key path.
     ///
@@ -114,7 +114,7 @@ extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
         _ value: Value,
         at keyPath: [Key],
         intermediateValue: (Key) -> Value
-    ) throws(__TreeKeyedError<Key>) -> Tree.Position {
+    ) throws(__TreeKeyedError<Key>) -> Position {
         precondition(!keyPath.isEmpty, "Key path must not be empty")
 
         // Ensure root exists

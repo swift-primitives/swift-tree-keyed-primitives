@@ -20,16 +20,23 @@ internal import Iterator_Protocol
 extension __TreeKeyedOrder.Pre {
 
     /// An iterator for pre-order traversal (root, then children in insertion order).
-    public struct Iterator<S: __TreeKeyedStorage>: Iterator_Primitive.Iterator.`Protocol`
+    ///
+    /// Move-only (`~Copyable`): the traversal scratch is the canonical direct
+    /// `Stack<Handle>`, which is move-only regardless of element (the W2 stack reshape);
+    /// the whole `Iterator.Protocol` / `Iterable` / `Materializing` machinery suppresses
+    /// `~Copyable`, so the iterator rides it without a CoW column (seat D3 ruling (a) —
+    /// no `Stack` `Shared` push twin is shipped, so the CoW-scratch shape (c′) is
+    /// unavailable).
+    public struct Iterator<S: __TreeKeyedStorage>: ~Copyable, Iterator_Primitive.Iterator.`Protocol`
     where S.Element: Copyable {
         @usableFromInline
-        let tree: Tree<S>
+        let tree: __Tree<S>
 
         @usableFromInline
         var pending: Stack<Store.Generational.Handle>
 
         @usableFromInline
-        init(tree: Tree<S>) {
+        init(tree: __Tree<S>) {
             self.tree = tree
             self.pending = Stack<Store.Generational.Handle>()
             if let rootHandle = tree._rootHandle {

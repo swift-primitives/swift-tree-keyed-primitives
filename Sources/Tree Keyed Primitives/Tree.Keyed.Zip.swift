@@ -27,10 +27,10 @@ public import Stack_Primitive
 /// - Returns: A tree whose structure is the intersection, with paired values.
 @inlinable
 public func zip<Key: Hash.`Protocol`, A: Copyable, B: Copyable>(
-    _ lhs: TreeKeyed<A, Key>,
-    _ rhs: TreeKeyed<B, Key>
-) -> TreeKeyed<(A, B), Key> {
-    var result = TreeKeyed<(A, B), Key>()
+    _ lhs: Tree<A>.Keyed<Key>,
+    _ rhs: Tree<B>.Keyed<Key>
+) -> Tree<(A, B)>.Keyed<Key> {
+    var result = Tree<(A, B)>.Keyed<Key>()
 
     guard let lhsRoot = lhs._rootHandle, let rhsRoot = rhs._rootHandle else {
         return result

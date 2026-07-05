@@ -15,7 +15,7 @@ public import Stack_Primitive
 
 // MARK: - Prune
 
-extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
+extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// Removes all subtrees rooted at nodes where the predicate returns true.
     ///

@@ -9,12 +9,11 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Hash_Primitives
 public import Tree_Primitives
 
 // MARK: - Keyed insert (the keyed error-mapping wrapper over the shared insert)
 
-extension Tree where S: __TreeKeyedStorage {
+extension __Tree where S: __TreeKeyedStorage {
 
     /// Inserts a value at the specified keyed position.
     ///
@@ -30,7 +29,7 @@ extension Tree where S: __TreeKeyedStorage {
     public mutating func insert(
         _ value: consuming Value,
         at position: __TreeKeyedInsertPosition<Key>
-    ) throws(__TreeKeyedError<Key>) -> Tree.Position {
+    ) throws(__TreeKeyedError<Key>) -> Position {
         switch position {
         case .root:
             do {
@@ -63,7 +62,7 @@ extension Tree where S: __TreeKeyedStorage {
 
 // MARK: - Copyable value operations (update / rootValue)
 
-extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
+extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// The root node's value, or `nil` if the tree is empty.
     ///
@@ -90,7 +89,7 @@ extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     /// - Throws: ``__TreeKeyedError/invalidPosition`` if the position is invalid or stale.
     @inlinable
     public mutating func update(
-        at position: Tree.Position,
+        at position: Position,
         _ newValue: Value
     ) throws(__TreeKeyedError<Key>) {
         guard let handle = _liveHandle(position) else { throw .invalidPosition }

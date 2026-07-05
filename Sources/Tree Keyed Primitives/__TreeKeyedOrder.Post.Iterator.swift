@@ -23,16 +23,21 @@ extension __TreeKeyedOrder.Post {
     ///
     /// Uses a two-stack approach: first builds reverse post-order via pre-order,
     /// then yields values in the correct order.
-    public struct Iterator<S: __TreeKeyedStorage>: Iterator_Primitive.Iterator.`Protocol`
+    ///
+    /// Move-only (`~Copyable`): the traversal scratch is the canonical direct
+    /// `Stack<Handle>`, which is move-only regardless of element (the W2 stack reshape);
+    /// the whole `Iterator.Protocol` / `Iterable` / `Materializing` machinery suppresses
+    /// `~Copyable`, so the iterator rides it without a CoW column (seat D3 ruling (a)).
+    public struct Iterator<S: __TreeKeyedStorage>: ~Copyable, Iterator_Primitive.Iterator.`Protocol`
     where S.Element: Copyable {
         @usableFromInline
-        let tree: Tree<S>
+        let tree: __Tree<S>
 
         @usableFromInline
         var output: Stack<Store.Generational.Handle>
 
         @usableFromInline
-        init(tree: Tree<S>) {
+        init(tree: __Tree<S>) {
             self.tree = tree
             self.output = Stack<Store.Generational.Handle>()
 

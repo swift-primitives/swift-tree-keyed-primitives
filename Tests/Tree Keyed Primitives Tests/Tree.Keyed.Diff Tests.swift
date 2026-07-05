@@ -3,6 +3,10 @@ import Tree_Primitives_Test_Support
 
 @testable import Tree_Keyed_Primitives
 
+// See Tree.Keyed Tests.swift: the keyed insert position is pinned explicitly because the
+// bare `.root` literal is ambiguous between the keyed and shared insert overloads.
+private typealias KeyedInsertPosition = __TreeKeyedInsertPosition<String>
+
 @Suite("Tree.Keyed.Diff")
 struct TreeKeyedDiffTests {
     @Suite struct Unit {}
@@ -18,7 +22,7 @@ struct TreeKeyedDiffTests {
 ///       └── z(30)
 private func makeThreeLevelTree() throws -> Tree<Int>.Keyed<String> {
     var tree = Tree<Int>.Keyed<String>()
-    let root = try tree.insert(0, at: .root)
+    let root = try tree.insert(0, at: KeyedInsertPosition.root)
     let a = try tree.insert(1, at: .child(of: root, key: "a"))
     _ = try tree.insert(10, at: .child(of: a, key: "x"))
     _ = try tree.insert(20, at: .child(of: a, key: "y"))
@@ -55,10 +59,10 @@ extension TreeKeyedDiffTests.Unit {
 
     @Test func `diff detects added child`() throws {
         var old = Tree<Int>.Keyed<String>()
-        _ = try old.insert(0, at: .root)
+        _ = try old.insert(0, at: KeyedInsertPosition.root)
 
         var new = Tree<Int>.Keyed<String>()
-        let newRoot = try new.insert(0, at: .root)
+        let newRoot = try new.insert(0, at: KeyedInsertPosition.root)
         _ = try new.insert(1, at: .child(of: newRoot, key: "a"))
 
         let diff = Tree<Int>.Keyed<String>.diff(from: old, to: new)
@@ -68,11 +72,11 @@ extension TreeKeyedDiffTests.Unit {
 
     @Test func `diff detects removed child`() throws {
         var old = Tree<Int>.Keyed<String>()
-        let oldRoot = try old.insert(0, at: .root)
+        let oldRoot = try old.insert(0, at: KeyedInsertPosition.root)
         _ = try old.insert(1, at: .child(of: oldRoot, key: "a"))
 
         var new = Tree<Int>.Keyed<String>()
-        _ = try new.insert(0, at: .root)
+        _ = try new.insert(0, at: KeyedInsertPosition.root)
 
         let diff = Tree<Int>.Keyed<String>.diff(from: old, to: new)
         #expect(diff.operations.count == 1)
@@ -81,11 +85,11 @@ extension TreeKeyedDiffTests.Unit {
 
     @Test func `diff detects modified child value`() throws {
         var old = Tree<Int>.Keyed<String>()
-        let oldRoot = try old.insert(0, at: .root)
+        let oldRoot = try old.insert(0, at: KeyedInsertPosition.root)
         _ = try old.insert(1, at: .child(of: oldRoot, key: "a"))
 
         var new = Tree<Int>.Keyed<String>()
-        let newRoot = try new.insert(0, at: .root)
+        let newRoot = try new.insert(0, at: KeyedInsertPosition.root)
         _ = try new.insert(99, at: .child(of: newRoot, key: "a"))
 
         let diff = Tree<Int>.Keyed<String>.diff(from: old, to: new)
@@ -96,7 +100,7 @@ extension TreeKeyedDiffTests.Unit {
     @Test func `diff of nil vs populated produces all added`() throws {
         let old = Tree<Int>.Keyed<String>()
         var new = Tree<Int>.Keyed<String>()
-        let root = try new.insert(0, at: .root)
+        let root = try new.insert(0, at: KeyedInsertPosition.root)
         _ = try new.insert(1, at: .child(of: root, key: "a"))
 
         let diff = Tree<Int>.Keyed<String>.diff(from: old, to: new)
@@ -111,7 +115,7 @@ extension TreeKeyedDiffTests.Unit {
 
     @Test func `diff of populated vs nil produces all removed`() throws {
         var old = Tree<Int>.Keyed<String>()
-        let root = try old.insert(0, at: .root)
+        let root = try old.insert(0, at: KeyedInsertPosition.root)
         _ = try old.insert(1, at: .child(of: root, key: "a"))
         let new = Tree<Int>.Keyed<String>()
 

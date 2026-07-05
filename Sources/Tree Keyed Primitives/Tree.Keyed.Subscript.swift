@@ -12,7 +12,7 @@
 
 // MARK: - Subscript (Read-Only)
 
-extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
+extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// Returns the value at the given key path, or nil if the path doesn't resolve.
     ///
@@ -39,7 +39,7 @@ extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
 // MARK: - Subscript (Sparse)
 
-extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
+extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// Gets or sets the value at the given key path in a sparse tree.
     ///
@@ -82,7 +82,7 @@ extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
 // MARK: - Sparse Insert Convenience
 
-extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
+extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// Inserts a value at the given key path, creating intermediate nodes with nil values.
     ///
@@ -102,7 +102,7 @@ extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     public mutating func insert<U>(
         _ value: U?,
         at keyPath: [Key]
-    ) throws(__TreeKeyedError<Key>) -> Tree.Position where Value == U? {
+    ) throws(__TreeKeyedError<Key>) -> Position where Value == U? {
         if keyPath.isEmpty {
             if root != nil {
                 try update(value, at: keyPath)

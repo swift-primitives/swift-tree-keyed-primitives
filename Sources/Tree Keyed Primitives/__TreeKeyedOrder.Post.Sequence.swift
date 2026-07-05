@@ -23,10 +23,10 @@ extension __TreeKeyedOrder.Post {
     @frozen
     public struct Sequence<S: __TreeKeyedStorage> {
         @usableFromInline
-        let tree: Tree<S>
+        let tree: __Tree<S>
 
         @usableFromInline
-        init(tree: Tree<S>) { self.tree = tree }
+        init(tree: __Tree<S>) { self.tree = tree }
     }
 }
 

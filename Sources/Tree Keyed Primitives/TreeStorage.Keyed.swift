@@ -9,7 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Dictionary_Ordered_Primitive
 public import Dictionary_Ordered_Primitives
 public import Dictionary_Primitive
 public import Hash_Indexed_Primitive
@@ -24,8 +23,9 @@ public import Tree_Primitives
 // `TreeStorage.Keyed<Element, Key>` is the keyed tree's storage capability conformer
 // ([DS-025]/[DS-027]): an ordered key→child-handle map (the ``__TreeKeyedLinks`` child
 // links + `parentKey` back-key) over the generational ``__TreeArena``. It is the `S` of
-// the canonical keyed tree `Tree<TreeStorage.Keyed<Element, Key>>` (the ``TreeKeyed``
-// alias). Mirrors ``TreeStorage/Dynamic`` exactly — only the child-link representation
+// the canonical keyed tree `__Tree<TreeStorage.Keyed<Element, Key>>` (the
+// `Tree<Element>.Keyed<Key>` front door). Mirrors ``TreeStorage/Dynamic`` exactly —
+// only the child-link representation
 // differs: the dynamic column uses a dense `[Handle]` (addressed by ordinal), the keyed
 // column uses the ordered keyed dictionary (addressed by `Key`).
 
@@ -230,7 +230,7 @@ extension TreeStorage.Keyed: Sendable where Element: Sendable, Key: Sendable {}
 
 // MARK: - Column-pinned construction (the `TreeStorage.Dynamic` mechanic: method-level `where ==`)
 
-extension Tree where S: ~Copyable {
+extension __Tree where S: ~Copyable {
 
     /// Creates an empty keyed tree (move-only values).
     @inlinable
@@ -272,18 +272,7 @@ extension Tree where S: ~Copyable {
     }
 }
 
-// MARK: - Ergonomic alias for the canonical keyed tree
-//
-// Top-level (NOT a namespaced generic typealias under `Tree<S>` — that crashes the 6.3.2
-// frontend, probe-confirmed in tree-core) so users write `TreeKeyed<Element, Key>` for the
-// canonical `Tree<TreeStorage.Keyed<Element, Key>>`. Mirrors ``TreeDynamic``.
-
-/// The canonical keyed (dictionary-indexed) tree: `Tree` over the keyed column.
-///
-/// ```swift
-/// var tree = TreeKeyed<Int, String>()
-/// let root = try tree.insert(0, at: .root)
-/// let child = try tree.insert(1, at: .child(of: root, key: "left"))
-/// ```
-public typealias TreeKeyed<Element: ~Copyable, Key: Hash.`Protocol`> =
-    Tree<TreeStorage.Keyed<Element, Key>>
+// The former `TreeKeyed` compound ergonomic alias is RETIRED (the §9.6.5 [API-NAME-001]
+// hygiene class, alongside `TreeDynamic`): the canonical spelling is the
+// `Tree<Element>.Keyed<Key>` front door (`Tree.Keyed.FrontDoor.swift`, this target).
+// The 6.3.2 frontend crash that forced the compound top-level alias is fixed on 6.3.3.

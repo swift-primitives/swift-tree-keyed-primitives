@@ -18,7 +18,7 @@ public import Tree_Primitives
 // the `Iterable`/`Sequenceable` traversal VIEWS — the canonical collection path
 // (`Array(tree.preOrder)` / `tree.preOrder.reduce(into:)`).
 
-extension Tree where S: __TreeKeyedStorage, S.Element: Copyable {
+extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// A sequence that yields values in pre-order (root, then children in insertion order).
     public var preOrder: __TreeKeyedOrder.Pre.Sequence<S> {
