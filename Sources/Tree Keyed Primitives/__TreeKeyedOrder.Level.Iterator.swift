@@ -11,7 +11,7 @@
 
 public import Store_Primitive
 public import Storage_Generational_Primitives
-public import Shared_Primitive
+public import Ownership_Shared_Primitive
 public import Column_Primitives
 public import Buffer_Ring_Primitive
 public import Queue_Primitives
@@ -30,12 +30,12 @@ extension __TreeKeyedOrder.Level {
         /// The pending-node FIFO on the `Shared` ring column — the CoW flavor keeps the
         /// iterator struct itself `Copyable`.
         @usableFromInline
-        var pending: Queue<Shared<Store.Generational.Handle, Column.Ring<Store.Generational.Handle>>>
+        var pending: __Queue<Ownership.Shared<Store.Generational.Handle, Column.Ring<Store.Generational.Handle>>>
 
         @usableFromInline
         init(tree: Tree<S>) {
             self.tree = tree
-            self.pending = Queue<Shared<Store.Generational.Handle, Column.Ring<Store.Generational.Handle>>>()
+            self.pending = __Queue<Ownership.Shared<Store.Generational.Handle, Column.Ring<Store.Generational.Handle>>>()
 
             if let rootHandle = tree._rootHandle {
                 pending.enqueue(rootHandle)

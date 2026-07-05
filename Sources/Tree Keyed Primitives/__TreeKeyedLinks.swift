@@ -13,7 +13,7 @@ public import Column_Primitives
 public import Dictionary_Ordered_Primitive
 public import Dictionary_Primitive
 public import Hash_Indexed_Primitive
-public import Shared_Primitive
+public import Ownership_Shared_Primitive
 public import Storage_Generational_Primitives
 public import Store_Primitive
 
@@ -43,12 +43,12 @@ struct __TreeKeyedLinks<Key: Hash.`Protocol`> {
     /// so the clone strategy is captured unconditionally and per-node child tables
     /// detach lazily when a CoW'd tree mutates them.
     @usableFromInline
-    typealias Children = Dictionary_Primitive.Dictionary<
-        Shared_Primitive.Shared<
+    typealias Children = __DictionaryOrdered<
+        Ownership.Shared<
             Hash.Entry<Key, Store.Generational.Handle>,
             Hash.Indexed<Column.Heap<Hash.Entry<Key, Store.Generational.Handle>>>
         >
-    >.Ordered
+    >
 
     /// Children indexed by key (insertion-ordered).
     @usableFromInline var children: Children
