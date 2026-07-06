@@ -475,10 +475,13 @@ extension TreeKeyedTests.EdgeCase {
         #expect {
             try tree.remove(at: root)
         } throws: { error in
-            // `remove` is the shared `Tree.Protocol` default → throws the shared `Tree.Error`
+            // `remove` is the shared `Tree.Protocol` default → throws the shared `__TreeError`
             // (it carries no key, so it needs no keyed error refinement). Spelled via the
-            // dynamic front door's `Error` path — `Tree.Keyed.Error` collides with the
-            // inherited shared alias (a keyed-error naming gap; see the W3.2 report).
+            // dynamic front door's `Error` path (`Tree<Int>.Error` == `__TreeError` through
+            // the P4 flow-through alias + the dynamic column's default witness). Post-P4
+            // the keyed door's `Tree<Int>.Keyed<String>.Error` names `__TreeKeyedError` —
+            // the two doors' errors are now distinct by column substitution, so the shared
+            // error `remove` throws must be spelled through the dynamic door here.
             guard let e = error as? Tree<Int>.Error,
                 case .cannotRemoveNonLeaf = e
             else { return false }
@@ -1096,5 +1099,44 @@ extension TreeKeyedTests.Integration {
         // Source tree has new values
         #expect(tree.value(at: ["a"]) == 999)
         #expect(tree.value(at: ["a", "x"]) == 888)
+    }
+}
+
+// MARK: - P4 per-instantiation Error resolution probe (S.Error flow-through)
+
+extension TreeKeyedTests.Unit {
+
+    /// Proves the P4 (2026-07-06, re-ruled) S.Error flow-through resolves the two doors'
+    /// errors DISTINCTLY by column substitution: the carrier's single
+    /// `Tree/Error = S.Error` alias forwards to the column's `__TreeStorage.Error`
+    /// witness — the dynamic column keeps the default (the shared `__TreeError`), the
+    /// keyed column pins `__TreeKeyedError<Key>`. Pre-fix, the unconstrained carrier
+    /// alias made `Tree<E>.Keyed<K>.Error` resolve to `__TreeError`; this probe would not
+    /// have compiled then (the keyed `.keyOccupied` case does not exist on `__TreeError`).
+    @Test
+    func `P4 Error flows from the column and resolves per instantiation`() {
+        // (1) Compile-time identity: the dynamic door's Error is the shared __TreeError
+        //     (the associatedtype DEFAULT witness).
+        let _: __TreeError.Type = Tree<Int>.Error.self
+        // (2) Compile-time identity: the keyed door's Error is __TreeKeyedError<Key>
+        //     (the keyed column's explicit witness).
+        let _: __TreeKeyedError<String>.Type = Tree<Int>.Keyed<String>.Error.self
+
+        // (3) The keyed .Error case set is the 4 keyed cases. `.keyOccupied` is UNIQUE to
+        //     the keyed error (the shared __TreeError has no such case), so this exhaustive
+        //     switch compiles only because the alias substituted to the keyed error.
+        let keyed: Tree<Int>.Keyed<String>.Error = .keyOccupied("k")
+        var matchedKeyOccupied = false
+        switch keyed {
+        case .invalidPosition, .rootOccupied, .cannotRemoveNonLeaf:
+            matchedKeyOccupied = false
+        case .keyOccupied(let key):
+            matchedKeyOccupied = (key == "k")
+        }
+        #expect(matchedKeyOccupied)
+
+        // (4) Runtime metatype identity (belt-and-suspenders).
+        #expect(Tree<Int>.Error.self == __TreeError.self)
+        #expect(Tree<Int>.Keyed<String>.Error.self == __TreeKeyedError<String>.self)
     }
 }

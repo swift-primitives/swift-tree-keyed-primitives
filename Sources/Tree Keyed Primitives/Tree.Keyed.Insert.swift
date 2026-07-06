@@ -60,7 +60,7 @@ extension __Tree where S: __TreeKeyedStorage {
     public mutating func insert(
         _ value: consuming Value,
         at position: Insert.Position
-    ) throws(__TreeKeyedError<Key>) -> Position {
+    ) throws(Self.Error) -> Position {
         switch position {
         case .root:
             do {
@@ -122,7 +122,7 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     public mutating func update(
         at position: Position,
         _ newValue: Value
-    ) throws(__TreeKeyedError<Key>) {
+    ) throws(Self.Error) {
         guard let handle = _liveHandle(position) else { throw .invalidPosition }
         _setValue(at: handle, newValue)
     }

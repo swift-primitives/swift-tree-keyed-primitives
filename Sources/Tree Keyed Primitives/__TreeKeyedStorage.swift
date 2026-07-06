@@ -33,7 +33,14 @@ public import Tree_Primitives
 
 /// The keyed storage-column capability: `__TreeStorage` with a key address, plus the two
 /// reverse-key reads the keyed tree's key-path surface needs.
-public protocol __TreeKeyedStorage: __TreeStorage where Address: Hash.`Protocol` {
+///
+/// The `Error == __TreeKeyedError<Address>` refinement pins the column's error witness
+/// (P4, 2026-07-06): in every `extension __Tree where S: __TreeKeyedStorage` the carrier's
+/// flow-through `Self.Error` is therefore CONCRETELY `__TreeKeyedError<S.Address>` — the
+/// keyed surface can spell its typed throws through the public path instead of the
+/// hoisted dunder ([API-ERR-007]).
+public protocol __TreeKeyedStorage: __TreeStorage
+where Address: Hash.`Protocol`, Error == __TreeKeyedError<Address> {
 
     /// The key under which `handle` is stored in its parent (`nil` for the root).
     func _parentKey(of handle: Store.Generational.Handle) -> Address?

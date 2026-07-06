@@ -102,7 +102,7 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     public mutating func insert<U>(
         _ value: U?,
         at keyPath: [Key]
-    ) throws(__TreeKeyedError<Key>) -> Position where Value == U? {
+    ) throws(Self.Error) -> Position where Value == U? {
         if keyPath.isEmpty {
             if root != nil {
                 try update(value, at: keyPath)
