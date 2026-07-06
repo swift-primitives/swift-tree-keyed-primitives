@@ -81,7 +81,7 @@ extension TreeStorage {
 
 // MARK: - __TreeStorage conformance (the arena + keyed child-link witnesses)
 
-extension TreeStorage.Keyed: __TreeStorage {
+extension TreeStorage.Keyed: __TreeStorage where Element: ~Copyable {
 
     // MARK: Arena requirements (delegated to the private __TreeArena)
 
