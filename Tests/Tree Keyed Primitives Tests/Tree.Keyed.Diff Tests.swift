@@ -5,7 +5,7 @@ import Tree_Primitives_Test_Support
 
 // See Tree.Keyed Tests.swift: the keyed insert position is pinned explicitly because the
 // bare `.root` literal is ambiguous between the keyed and shared insert overloads.
-private typealias KeyedInsertPosition = __TreeKeyedInsertPosition<String>
+private typealias KeyedInsertPosition = Tree<Int>.Keyed<String>.Insert.Position
 
 @Suite("Tree.Keyed.Diff")
 struct TreeKeyedDiffTests {

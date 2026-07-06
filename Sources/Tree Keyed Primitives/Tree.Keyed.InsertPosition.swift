@@ -18,9 +18,11 @@
 // This is a documented exception per [API-EXC-001] due to Swift language
 // limitations with generic nested types.
 //
-// Use the typealias form in your code: Tree.Keyed<Key, Value>.InsertPosition
+// Use the typealias form in your code: Tree.Keyed<Key, Value>.Insert.Position
+// (the [API-NAME-002] decomposition of the former compound `InsertPosition`, which
+// avoids the collision with the shared `Tree.Protocol` `InsertPosition` member).
 
-/// Hoisted implementation of ``Tree/Keyed/InsertPosition``.
+/// Hoisted implementation of ``Tree/Keyed/Insert/Position``.
 ///
 /// Specifies where to insert a new node in a keyed tree.
 ///
@@ -30,7 +32,7 @@
 /// to identify children. Each child is associated with a unique key within
 /// its parent's child set.
 ///
-/// - Note: Use ``Tree/Keyed/InsertPosition`` in your code, not this type directly.
+/// - Note: Use ``Tree/Keyed/Insert/Position`` in your code, not this type directly.
 public enum __TreeKeyedInsertPosition<Key: Hash.`Protocol`> {
     /// Insert as the root of the tree.
     case root

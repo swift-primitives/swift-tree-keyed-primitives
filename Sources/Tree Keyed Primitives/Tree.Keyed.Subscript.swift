@@ -62,7 +62,7 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
                 if root != nil {
                     _ = try? update(newValue, at: keyPath)
                 } else {
-                    _ = try? insert(newValue, at: __TreeKeyedInsertPosition<Key>.root)
+                    _ = try? insert(newValue, at: Insert.Position.root)
                 }
             } else {
                 _ = try? insert(newValue, at: keyPath)
@@ -108,7 +108,7 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
                 try update(value, at: keyPath)
                 return root!
             } else {
-                return try insert(value, at: __TreeKeyedInsertPosition<Key>.root)
+                return try insert(value, at: Insert.Position.root)
             }
         }
         return try insert(value, at: keyPath, intermediateValue: { _ in nil })

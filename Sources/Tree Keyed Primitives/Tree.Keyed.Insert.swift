@@ -11,6 +11,37 @@
 
 public import Tree_Primitives
 
+// MARK: - Hoisted Insert namespace (module level) — the `Tree.Keyed.Insert` vocabulary
+//
+// Swift does not allow nested types inside generic types to be easily accessed, so the
+// keyed-insert vocabulary namespace is hoisted to module level and surfaced via the
+// `Insert` nest alias below. `Tree.Keyed.Insert.Position` is the [API-NAME-001]/[API-NAME-002]
+// decomposition of the former compound `InsertPosition`: it AVOIDS the collision a nested
+// `Tree.Keyed.InsertPosition` would cause by redeclaring the shared `Tree.Protocol`
+// `InsertPosition` member (`__TreeInsertPosition<Address>`). Hoisted per [API-EXC-001].
+
+/// Hoisted implementation of the keyed-insert vocabulary namespace (``Tree/Keyed/Insert``).
+///
+/// - Note: Use ``Tree/Keyed/Insert`` in your code, not this type directly.
+public enum __TreeKeyedInsert<Key: Hash.`Protocol`> {
+
+    /// Where to insert a new node in a keyed tree (``Tree/Keyed/Insert/Position``).
+    public typealias Position = __TreeKeyedInsertPosition<Key>
+}
+
+// MARK: - Tree.Keyed.Insert — the nest alias onto the keyed carrier
+
+extension __Tree where S: __TreeKeyedStorage {
+
+    /// The keyed-insert vocabulary namespace: ``Tree/Keyed/Insert/Position`` names where to
+    /// insert a new node (the [API-NAME-002] decomposition of the former `InsertPosition`).
+    ///
+    /// Hosted on the `S: __TreeKeyedStorage` surface (the keyed-specific column capability,
+    /// which is Copyable-constrained — no `~Copyable` restatement, matching the keyed insert /
+    /// helper / key-path extensions this alias serves).
+    public typealias Insert = __TreeKeyedInsert<S.Address>
+}
+
 // MARK: - Keyed insert (the keyed error-mapping wrapper over the shared insert)
 
 extension __Tree where S: __TreeKeyedStorage {
@@ -28,7 +59,7 @@ extension __Tree where S: __TreeKeyedStorage {
     @discardableResult
     public mutating func insert(
         _ value: consuming Value,
-        at position: __TreeKeyedInsertPosition<Key>
+        at position: Insert.Position
     ) throws(__TreeKeyedError<Key>) -> Position {
         switch position {
         case .root:

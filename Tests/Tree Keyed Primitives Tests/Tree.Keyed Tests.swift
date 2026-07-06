@@ -16,11 +16,10 @@ import Tree_Primitives_Test_Support
 @testable import Tree_Keyed_Primitives
 
 // The bare `.root` literal is ambiguous at keyed insert sites: the keyed wrapper
-// (`__TreeKeyedInsertPosition<Key>`, richer typed error) and the shared tree-core insert
-// (`__TreeInsertPosition<Address>`) both apply. The suites assert the KEYED error
-// (`__TreeKeyedError`), so they pin the keyed position type explicitly (in-package tests
-// name hoisted types directly, as the suites already do for `__TreeKeyedError`).
-private typealias KeyedInsertPosition = __TreeKeyedInsertPosition<String>
+// (`Tree.Keyed.Insert.Position`, richer typed error) and the shared tree-core insert
+// (`Tree.InsertPosition`) both apply. The suites assert the KEYED error
+// (`__TreeKeyedError`), so they pin the keyed position type explicitly via its public path.
+private typealias KeyedInsertPosition = Tree<Int>.Keyed<String>.Insert.Position
 
 // MARK: - Tree.Keyed Tests (Parallel Namespace per [TEST-004])
 
@@ -476,9 +475,11 @@ extension TreeKeyedTests.EdgeCase {
         #expect {
             try tree.remove(at: root)
         } throws: { error in
-            // `remove` is the shared `Tree.Protocol` default → throws `__TreeError`
-            // (it carries no key, so it needs no keyed error refinement).
-            guard let e = error as? __TreeError,
+            // `remove` is the shared `Tree.Protocol` default → throws the shared `Tree.Error`
+            // (it carries no key, so it needs no keyed error refinement). Spelled via the
+            // dynamic front door's `Error` path — `Tree.Keyed.Error` collides with the
+            // inherited shared alias (a keyed-error naming gap; see the W3.2 report).
+            guard let e = error as? Tree<Int>.Error,
                 case .cannotRemoveNonLeaf = e
             else { return false }
             return true
