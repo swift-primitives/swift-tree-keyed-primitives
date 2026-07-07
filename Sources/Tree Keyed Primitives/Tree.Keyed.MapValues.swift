@@ -1,3 +1,12 @@
+// swift-format-ignore-file: AmbiguousTrailingClosureOverload
+//
+// The `mapValues(_:)` / `compactMapValues(_:)` families in this file are overload
+// sets distinguished by their closure PARAMETER SIGNATURES (value-only vs
+// key-path-aware, plain vs broadcast-tuple result, sync vs async) — the standard
+// throwing/parameter-shape overload family (P2b carve-out). swift-format's
+// syntactic check sees only the shared base name and flags every trailing-closure
+// overload; call sites resolve unambiguously on the closure's shape.
+//
 // ===----------------------------------------------------------------------===//
 //
 // This source file is part of the swift-primitives open source project
@@ -9,9 +18,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Store_Primitive
-public import Storage_Generational_Primitives
 public import Stack_Primitive
+public import Storage_Generational_Primitives
+public import Store_Primitive
 
 // MARK: - Map Values
 
@@ -30,14 +39,15 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
         var pending = Stack<(source: Store.Generational.Handle, parentHandle: Store.Generational.Handle?, parentKey: Key?)>()
         pending.push((rootHandle, nil, nil))
 
-        while !pending.isEmpty {
-            let (sourceHandle, destParentHandle, key) = pending.pop()!
+        while let (sourceHandle, destParentHandle, key) = pending.pop() {
             let newValue = transform(_value(of: sourceHandle))
 
             let handle = result._insertNode(newValue, parent: destParentHandle)
 
-            if let destParentHandle {
-                result._linkChild(handle, to: destParentHandle, at: key!)
+            // Invariant: `key` is non-nil exactly when `destParentHandle` is (both are
+            // pushed together for every non-root node).
+            if let destParentHandle, let key {
+                result._linkChild(handle, to: destParentHandle, at: key)
             } else {
                 result._rootHandle = handle
             }
@@ -60,11 +70,12 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     ///
     /// - Parameter transform: A closure that receives the key path and value, returning a new value.
     /// - Returns: A tree with the same keys and structure, but transformed values.
+    /// - Throws: Whatever `transform` throws, propagated from the first failing node.
     @inlinable
     public func mapValues<U, E>(
         _ transform: ([Key], Value) throws(E) -> U
     ) throws(E) -> Tree<U>.Keyed<Key> {
-        try compactMapValues { (path, value) throws(E) -> U? in
+        try compactMapValues { path, value throws(E) -> U? in
             try transform(path, value)
         }
     }
@@ -82,11 +93,12 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     /// - Parameter transform: A closure that receives the key path and value,
     ///   returning the new value and whether to broadcast it to descendants.
     /// - Returns: A tree with the same keys and structure, but transformed values.
+    /// - Throws: Whatever `transform` throws, propagated from the first failing node.
     @inlinable
     public func mapValues<U, E>(
         _ transform: ([Key], Value) throws(E) -> (U, recursivelyApply: Bool)
     ) throws(E) -> Tree<U>.Keyed<Key> {
-        try compactMapValues { (path, value) throws(E) in
+        try compactMapValues { path, value throws(E) in
             try transform(path, value) as (U, recursivelyApply: Bool)?
         }
     }
@@ -94,8 +106,9 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     // MARK: - Compact Map Values with Key Path
 
     /// Returns a new tree with values optionally transformed, removing nodes where
-    /// the transform returns nil. The key path from root to each node is provided.
+    /// the transform returns nil.
     ///
+    /// The key path from root to each node is provided.
     /// When a node's transform returns nil, the node and its entire subtree are dropped.
     ///
     /// Delegates to ``compactMapValues(_:)-8r2v`` per [IMPL-033].
@@ -103,11 +116,12 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     /// - Parameter transform: A closure that receives the key path and value,
     ///   returning the new value or nil to drop the subtree.
     /// - Returns: A tree with transformed values, minus pruned subtrees.
+    /// - Throws: Whatever `transform` throws, propagated from the first failing node.
     @inlinable
     public func compactMapValues<U, E>(
         _ transform: ([Key], Value) throws(E) -> U?
     ) throws(E) -> Tree<U>.Keyed<Key> {
-        try compactMapValues { (path, value) throws(E) in
+        try compactMapValues { path, value throws(E) in
             try transform(path, value).map { ($0, recursivelyApply: false) }
         }
     }
@@ -125,6 +139,7 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     /// - Parameter transform: A closure that receives the key path and value,
     ///   returning the new value and broadcast flag, or nil to drop the subtree.
     /// - Returns: A tree with transformed values, minus pruned subtrees.
+    /// - Throws: Whatever `transform` throws, propagated from the first failing node.
     /// - Complexity: O(n) where n is the number of nodes in the source tree.
     @inlinable
     public func compactMapValues<U, E>(
@@ -144,9 +159,7 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
         >()
         pending.push((rootHandle, nil, nil, [], nil))
 
-        while !pending.isEmpty {
-            let (sourceHandle, destParentHandle, key, path, broadcast) = pending.pop()!
-
+        while let (sourceHandle, destParentHandle, key, path, broadcast) = pending.pop() {
             let newValue: U
             let shouldBroadcast: Bool
 
@@ -163,8 +176,10 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
             let handle = result._insertNode(newValue, parent: destParentHandle)
 
-            if let destParentHandle {
-                result._linkChild(handle, to: destParentHandle, at: key!)
+            // Invariant: `key` is non-nil exactly when `destParentHandle` is (both are
+            // pushed together for every non-root node).
+            if let destParentHandle, let key {
+                result._linkChild(handle, to: destParentHandle, at: key)
             } else {
                 result._rootHandle = handle
             }
@@ -209,9 +224,7 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
         var pending = Stack<(source: Store.Generational.Handle, destParent: Store.Generational.Handle)>()
         pending.push((rootHandle, rootDest))
 
-        while !pending.isEmpty {
-            let (sourceHandle, destParentHandle) = pending.pop()!
-
+        while let (sourceHandle, destParentHandle) = pending.pop() {
             for (childKey, childHandle) in _children(of: sourceHandle) {
                 guard let childValue = transform(_value(of: childHandle)) else { continue }
 
@@ -235,7 +248,7 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     public func mapValues<U, E>(
         _ transform: ([Key], Value) async throws(E) -> U
     ) async throws(E) -> Tree<U>.Keyed<Key> {
-        try await compactMapValues { (path, value) async throws(E) -> U? in
+        try await compactMapValues { path, value async throws(E) -> U? in
             try await transform(path, value)
         }
     }
@@ -245,7 +258,7 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     public func mapValues<U, E>(
         _ transform: ([Key], Value) async throws(E) -> (U, recursivelyApply: Bool)
     ) async throws(E) -> Tree<U>.Keyed<Key> {
-        try await compactMapValues { (path, value) async throws(E) in
+        try await compactMapValues { path, value async throws(E) in
             try await transform(path, value) as (U, recursivelyApply: Bool)?
         }
     }
@@ -255,7 +268,7 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     public func compactMapValues<U, E>(
         _ transform: ([Key], Value) async throws(E) -> U?
     ) async throws(E) -> Tree<U>.Keyed<Key> {
-        try await compactMapValues { (path, value) async throws(E) in
+        try await compactMapValues { path, value async throws(E) in
             try await transform(path, value).map { ($0, recursivelyApply: false) }
         }
     }
@@ -279,9 +292,7 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
         >()
         pending.push((rootHandle, nil, nil, [], nil))
 
-        while !pending.isEmpty {
-            let (sourceHandle, destParentHandle, key, path, broadcast) = pending.pop()!
-
+        while let (sourceHandle, destParentHandle, key, path, broadcast) = pending.pop() {
             let newValue: U
             let shouldBroadcast: Bool
 
@@ -298,8 +309,10 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
             let handle = result._insertNode(newValue, parent: destParentHandle)
 
-            if let destParentHandle {
-                result._linkChild(handle, to: destParentHandle, at: key!)
+            // Invariant: `key` is non-nil exactly when `destParentHandle` is (both are
+            // pushed together for every non-root node).
+            if let destParentHandle, let key {
+                result._linkChild(handle, to: destParentHandle, at: key)
             } else {
                 result._rootHandle = handle
             }

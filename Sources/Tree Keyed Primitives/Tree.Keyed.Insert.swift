@@ -68,6 +68,7 @@ extension __Tree where S: __TreeKeyedStorage {
             } catch {
                 throw Self._map(error)
             }
+
         case .child(of: let parent, let key):
             do {
                 return try insert(value, at: __TreeInsertPosition<Key>.child(of: parent, at: key))

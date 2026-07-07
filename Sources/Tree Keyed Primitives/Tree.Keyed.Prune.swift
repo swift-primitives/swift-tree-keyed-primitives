@@ -9,9 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Store_Primitive
-public import Storage_Generational_Primitives
 public import Stack_Primitive
+public import Storage_Generational_Primitives
+public import Store_Primitive
+import Tree_Primitives
 
 // MARK: - Prune
 
@@ -32,7 +33,13 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
         if shouldRemove(_value(of: rootHandle)) {
             // Remove entire tree
             if let root = self.root {
-                try? removeSubtree(at: root)
+                do throws(__TreeError) {
+                    try removeSubtree(at: root)
+                } catch {
+                    // Fire-and-forget: `root` was just minted from the live root
+                    // handle, so the only failure mode (invalid position) is
+                    // unreachable; pruning is best-effort by contract.
+                }
             }
             return
         }
@@ -42,9 +49,7 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
         var pending = Stack<Store.Generational.Handle>()
         pending.push(rootHandle)
 
-        while !pending.isEmpty {
-            let handle = pending.pop()!
-
+        while let handle = pending.pop() {
             for (childKey, childHandle) in _children(of: handle) {
                 if shouldRemove(_value(of: childHandle)) {
                     toPrune.append((parentHandle: handle, key: childKey))
@@ -59,7 +64,13 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
         // and frees the subtree post-order.
         for (parentHandle, key) in toPrune.reversed() {
             guard let childHandle = _childHandle(of: parentHandle, key: key) else { continue }
-            try? removeSubtree(at: _position(of: childHandle))
+            do throws(__TreeError) {
+                try removeSubtree(at: _position(of: childHandle))
+            } catch {
+                // Fire-and-forget: the position was just minted from a live child
+                // handle, so the only failure mode (invalid position) is
+                // unreachable; pruning is best-effort by contract.
+            }
         }
     }
 }

@@ -9,9 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Store_Primitive
-public import Storage_Generational_Primitives
 public import Stack_Primitive
+public import Storage_Generational_Primitives
+public import Store_Primitive
 
 // MARK: - Zip (Structural Intersection)
 
@@ -51,9 +51,7 @@ public func zip<Key: Hash.`Protocol`, A: Copyable, B: Copyable>(
     >()
     pending.push((lhsRoot, rhsRoot, rootDest))
 
-    while !pending.isEmpty {
-        let (lhsHandle, rhsHandle, destParentHandle) = pending.pop()!
-
+    while let (lhsHandle, rhsHandle, destParentHandle) = pending.pop() {
         // For each child key in lhs, check if rhs also has it
         for (key, lhsChild) in lhs._children(of: lhsHandle) {
             guard let rhsChild = rhs._childHandle(of: rhsHandle, key: key) else { continue }

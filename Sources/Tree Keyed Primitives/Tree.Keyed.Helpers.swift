@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Store_Primitive
 public import Storage_Generational_Primitives
+public import Store_Primitive
 public import Tree_Primitives
 
 // MARK: - Keyed tree vocabulary + handle-level seams (the de-compounded port surface)

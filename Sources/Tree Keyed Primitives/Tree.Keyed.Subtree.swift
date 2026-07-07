@@ -9,9 +9,9 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Store_Primitive
-public import Storage_Generational_Primitives
 public import Stack_Primitive
+public import Storage_Generational_Primitives
+public import Store_Primitive
 
 // MARK: - Subtree Extraction
 
@@ -44,9 +44,7 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
         var pending = Stack<(source: Store.Generational.Handle, dest: Store.Generational.Handle)>()
         pending.push((sourceHandle, rootDest))
 
-        while !pending.isEmpty {
-            let (srcHandle, dstHandle) = pending.pop()!
-
+        while let (srcHandle, dstHandle) = pending.pop() {
             for (childKey, childHandle) in _children(of: srcHandle) {
                 let newChild = result._insertNode(_value(of: childHandle), parent: dstHandle)
                 result._linkChild(newChild, to: dstHandle, at: childKey)

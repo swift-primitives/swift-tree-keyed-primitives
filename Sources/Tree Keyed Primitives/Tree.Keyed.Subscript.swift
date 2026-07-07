@@ -9,7 +9,6 @@
 //
 // ===----------------------------------------------------------------------===//
 
-
 // MARK: - Subscript (Read-Only)
 
 extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
@@ -55,17 +54,37 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     @inlinable
     public subscript<U>(keyPath: [Key]) -> U? where Value == U? {
         get {
+            // `value(at:)` returns `Value?` = `U??` here; the `?? nil` FLATTENS the
+            // double optional to the subscript's `U?` — removing it would change the
+            // type. Known redundant_nil_coalescing false-positive class (trap table).
+            // swiftlint:disable:next redundant_nil_coalescing
             value(at: keyPath) ?? nil
         }
         set {
+            // Fire-and-forget by contract: the sparse setter mirrors
+            // `Swift.Dictionary`'s subscript — intermediate nodes are created as
+            // needed, so the structural failure modes are unreachable and any
+            // would-be error is intentionally discarded.
             if keyPath.isEmpty {
                 if root != nil {
-                    _ = try? update(newValue, at: keyPath)
+                    do throws(Self.Error) {
+                        try update(newValue, at: keyPath)
+                    } catch {
+                        // Unreachable: root was just checked non-nil.
+                    }
                 } else {
-                    _ = try? insert(newValue, at: Insert.Position.root)
+                    do throws(Self.Error) {
+                        _ = try insert(newValue, at: Insert.Position.root)
+                    } catch {
+                        // Unreachable: root was just checked nil.
+                    }
                 }
             } else {
-                _ = try? insert(newValue, at: keyPath)
+                do throws(Self.Error) {
+                    _ = try insert(newValue, at: keyPath)
+                } catch {
+                    // Unreachable: the sparse insert creates every missing node.
+                }
             }
         }
     }
@@ -97,6 +116,8 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     ///   - value: The value to insert at the terminal key.
     ///   - keyPath: The keys from root to the insertion point.
     /// - Returns: The position of the inserted or updated node.
+    /// - Throws: ``__TreeKeyedError/rootOccupied`` / ``__TreeKeyedError/invalidPosition``
+    ///   from the underlying keyed insert, if the path resolution races a stale position.
     @inlinable
     @discardableResult
     public mutating func insert<U>(
@@ -104,12 +125,11 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
         at keyPath: [Key]
     ) throws(Self.Error) -> Position where Value == U? {
         if keyPath.isEmpty {
-            if root != nil {
-                try update(value, at: keyPath)
-                return root!
-            } else {
+            guard let root else {
                 return try insert(value, at: Insert.Position.root)
             }
+            try update(value, at: keyPath)
+            return root
         }
         return try insert(value, at: keyPath, intermediateValue: { _ in nil })
     }

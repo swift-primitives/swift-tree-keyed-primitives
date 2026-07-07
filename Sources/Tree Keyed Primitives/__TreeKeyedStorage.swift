@@ -10,8 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Hash_Primitives
-public import Store_Primitive
 public import Storage_Generational_Primitives
+public import Store_Primitive
 public import Tree_Primitives
 
 // MARK: - __TreeKeyedStorage — the KEYED storage-column capability (refines __TreeStorage)
@@ -31,6 +31,11 @@ public import Tree_Primitives
 // (`extension __Tree where S: __TreeKeyedStorage`) and reach the column through the
 // public `__Tree<S>._storage` accessor (the tree-core seam). Hoisted per [API-EXC-001].
 
+// `Error` in the where clause below is the `__TreeStorage` ASSOCIATED TYPE being
+// same-type-constrained, not a reference to the `Swift.Error` protocol — qualifying
+// it would break the constraint. Known false-positive position for the bare-Error
+// rule; disable/enable block (not disable:next) so the doc comment stays attached.
+// swiftlint:disable swift_error_qualification
 /// The keyed storage-column capability: `__TreeStorage` with a key address, plus the two
 /// reverse-key reads the keyed tree's key-path surface needs.
 ///
@@ -41,6 +46,7 @@ public import Tree_Primitives
 /// hoisted dunder ([API-ERR-007]).
 public protocol __TreeKeyedStorage: __TreeStorage
 where Address: Hash.`Protocol`, Error == __TreeKeyedError<Address> {
+    // swiftlint:enable swift_error_qualification
 
     /// The key under which `handle` is stored in its parent (`nil` for the root).
     func _parentKey(of handle: Store.Generational.Handle) -> Address?

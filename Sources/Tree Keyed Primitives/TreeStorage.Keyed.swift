@@ -42,12 +42,13 @@ extension TreeStorage {
         /// Children are addressed by a unique key in this column's child domain.
         public typealias Address = Key
 
-        /// The public error type of the keyed tree surface (P4, 2026-07-06): the error
-        /// FLOWS FROM THE COLUMN through the carrier's single `Tree/Error = S.Error`
-        /// flow-through alias (`Tree Index Primitives`), so `Tree<E>.Keyed<K>.Error`
-        /// names the richer, key-carrying ``__TreeKeyedError`` — overriding the
-        /// `__TreeStorage.Error` default (the shared `__TreeError`) the dynamic column
-        /// keeps. The [API-ERR-002] `Error` leaf for the keyed door.
+        /// The public error type of the keyed tree surface.
+        ///
+        /// P4, 2026-07-06: the error FLOWS FROM THE COLUMN through the carrier's single
+        /// `Tree/Error = S.Error` flow-through alias (`Tree Index Primitives`), so
+        /// `Tree<E>.Keyed<K>.Error` names the richer, key-carrying ``__TreeKeyedError``
+        /// — overriding the `__TreeStorage.Error` default (the shared `__TreeError`)
+        /// the dynamic column keeps. The [API-ERR-002] `Error` leaf for the keyed door.
         public typealias Error = __TreeKeyedError<Key>
 
         /// The private generational arena (NON-PUBLIC — `@usableFromInline` for the

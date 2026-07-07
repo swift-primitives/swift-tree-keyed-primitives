@@ -9,13 +9,13 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Store_Primitive
-public import Storage_Generational_Primitives
-public import Stack_Primitive
-public import Tree_Primitives
-internal import Stack_Primitives
 internal import Iterator_Primitive
 internal import Iterator_Protocol
+public import Stack_Primitive
+internal import Stack_Primitives
+public import Storage_Generational_Primitives
+public import Store_Primitive
+public import Tree_Primitives
 
 extension __TreeKeyedOrder.Post {
 
@@ -47,8 +47,7 @@ extension __TreeKeyedOrder.Post {
                 pending.push(rootHandle)
             }
 
-            while !pending.isEmpty {
-                let handle = pending.pop()!
+            while let handle = pending.pop() {
                 output.push(handle)
 
                 for (_, child) in tree._children(of: handle) {
@@ -57,10 +56,11 @@ extension __TreeKeyedOrder.Post {
             }
         }
 
+        /// Advances to the next node in post-order (children before parent), or
+        /// returns `nil` when traversal is exhausted.
         @inlinable
         public mutating func next() -> S.Element? {
-            guard !output.isEmpty else { return nil }
-            let handle = output.pop()!
+            guard let handle = output.pop() else { return nil }
             return tree._value(of: handle)
         }
     }

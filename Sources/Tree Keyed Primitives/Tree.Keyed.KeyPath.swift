@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Store_Primitive
 public import Storage_Generational_Primitives
+public import Store_Primitive
 public import Tree_Primitives
 
 // MARK: - Key Path Operations
@@ -108,6 +108,8 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     ///   - intermediateValue: A closure that provides values for intermediate nodes
     ///     that need to be created. Called with the key of each intermediate node.
     /// - Returns: The position of the newly inserted (or updated) node.
+    /// - Throws: Nothing today — the signature reserves the column's error type
+    ///   for future validating paths.
     @inlinable
     @discardableResult
     public mutating func insert(
@@ -117,12 +119,16 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
     ) throws(Self.Error) -> Position {
         precondition(!keyPath.isEmpty, "Key path must not be empty")
 
-        // Ensure root exists
-        if _rootHandle == nil {
-            _rootHandle = _insertNode(intermediateValue(keyPath[0]), parent: nil)
+        // Ensure root exists; keep the handle local so no force-unwrap is needed.
+        let rootHandle: Store.Generational.Handle
+        if let existing = _rootHandle {
+            rootHandle = existing
+        } else {
+            rootHandle = _insertNode(intermediateValue(keyPath[0]), parent: nil)
+            _rootHandle = rootHandle
         }
 
-        var currentHandle = _rootHandle!
+        var currentHandle = rootHandle
 
         // Walk down to the parent of the terminal node, creating intermediates
         for i in keyPath.indices.dropLast() {
@@ -136,15 +142,18 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
             }
         }
 
-        // Insert or update terminal node
-        let terminalKey = keyPath.last!
-        if let existingChild = _childHandle(of: currentHandle, key: terminalKey) {
-            _setValue(at: existingChild, value)
-            return _position(of: existingChild)
-        } else {
+        // Insert or update terminal node.
+        // WHY guard-let over `keyPath.last!`: the precondition above guarantees
+        // non-emptiness; the guard preserves that trap without a force-unwrap.
+        guard let terminalKey = keyPath.last else {
+            preconditionFailure("Key path must not be empty")
+        }
+        guard let existingChild = _childHandle(of: currentHandle, key: terminalKey) else {
             let handle = _insertNode(value, parent: currentHandle)
             _linkChild(handle, to: currentHandle, at: terminalKey)
             return _position(of: handle)
         }
+        _setValue(at: existingChild, value)
+        return _position(of: existingChild)
     }
 }

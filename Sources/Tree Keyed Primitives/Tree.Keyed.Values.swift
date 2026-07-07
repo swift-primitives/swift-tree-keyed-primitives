@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Store_Primitive
 public import Storage_Generational_Primitives
+public import Store_Primitive
 
 // MARK: - Values Along Key Path
 

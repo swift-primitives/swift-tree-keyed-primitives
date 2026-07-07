@@ -9,13 +9,13 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Store_Primitive
-public import Storage_Generational_Primitives
-public import Stack_Primitive
-public import Tree_Primitives
-internal import Stack_Primitives
 internal import Iterator_Primitive
 internal import Iterator_Protocol
+public import Stack_Primitive
+internal import Stack_Primitives
+public import Storage_Generational_Primitives
+public import Store_Primitive
+public import Tree_Primitives
 
 extension __TreeKeyedOrder.Pre {
 
@@ -44,11 +44,12 @@ extension __TreeKeyedOrder.Pre {
             }
         }
 
+        /// Advances to the next node in pre-order (parent before children, children
+        /// in insertion order), or returns `nil` when traversal is exhausted.
         @inlinable
         public mutating func next() -> S.Element? {
-            guard !pending.isEmpty else { return nil }
+            guard let handle = pending.pop() else { return nil }
 
-            let handle = pending.pop()!
             let value = tree._value(of: handle)
 
             // Collect children, push in reverse for correct order

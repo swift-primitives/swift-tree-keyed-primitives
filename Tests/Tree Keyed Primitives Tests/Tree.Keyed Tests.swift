@@ -9,8 +9,8 @@
 //
 // ===----------------------------------------------------------------------===//
 
-import Testing
 import Sequence_Primitives
+import Testing
 import Tree_Primitives_Test_Support
 
 @testable import Tree_Keyed_Primitives
@@ -411,12 +411,15 @@ extension TreeKeyedTests.Unit {
 
 extension TreeKeyedTests.Unit {
 
-    /// Builds a test tree:
+    /// Builds a test tree.
+    ///
+    /// ```
     ///        0
     ///       / \
     ///      1   2
     ///     / \
     ///    3   4
+    /// ```
     private func makeTestTree() throws -> Tree<Int>.Keyed<String> {
         var tree = Tree<Int>.Keyed<String>()
         let root = try tree.insert(0, at: KeyedInsertPosition.root)
@@ -460,6 +463,7 @@ extension TreeKeyedTests.EdgeCase {
             switch keyedError {
             case .keyOccupied(let key):
                 return key == "child"
+
             default:
                 return false
             }
@@ -724,7 +728,7 @@ extension TreeKeyedTests.Unit {
         struct StopError: Swift.Error {}
 
         #expect(throws: StopError.self) {
-            try tree.forEach { (path: [String], value: Int) throws(StopError) in
+            try tree.forEach { (_: [String], value: Int) throws(StopError) in
                 if value == 10 { throw StopError() }
             }
         }
@@ -771,7 +775,7 @@ extension TreeKeyedTests.Unit {
     func `compactMapValues with key path filters nodes and preserves structure`() throws {
         let tree = try makeGraphParityTree()
 
-        let result = tree.compactMapValues { (path: [String], value: Int) -> Int? in
+        let result = tree.compactMapValues { (_: [String], value: Int) -> Int? in
             value >= 10 ? value : nil
         }
 
@@ -1110,10 +1114,15 @@ extension TreeKeyedTests.Unit {
     /// errors DISTINCTLY by column substitution: the carrier's single
     /// `Tree/Error = S.Error` alias forwards to the column's `__TreeStorage.Error`
     /// witness — the dynamic column keeps the default (the shared `__TreeError`), the
-    /// keyed column pins `__TreeKeyedError<Key>`. Pre-fix, the unconstrained carrier
+    /// keyed column pins `__TreeKeyedError<Key>`.
+    ///
+    /// Pre-fix, the unconstrained carrier
     /// alias made `Tree<E>.Keyed<K>.Error` resolve to `__TreeError`; this probe would not
     /// have compiled then (the keyed `.keyOccupied` case does not exist on `__TreeError`).
     @Test
+    // The word "Error" below is part of a backtick-quoted TEST NAME, not a type
+    // reference — known false-positive position for the bare-Error text scan.
+    // swiftlint:disable:next swift_error_qualification
     func `P4 Error flows from the column and resolves per instantiation`() {
         // (1) Compile-time identity: the dynamic door's Error is the shared __TreeError
         //     (the associatedtype DEFAULT witness).
@@ -1130,6 +1139,7 @@ extension TreeKeyedTests.Unit {
         switch keyed {
         case .invalidPosition, .rootOccupied, .cannotRemoveNonLeaf:
             matchedKeyOccupied = false
+
         case .keyOccupied(let key):
             matchedKeyOccupied = (key == "k")
         }

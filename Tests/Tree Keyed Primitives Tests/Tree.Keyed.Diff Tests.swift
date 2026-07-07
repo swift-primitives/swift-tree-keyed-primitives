@@ -13,13 +13,16 @@ struct TreeKeyedDiffTests {
     @Suite struct Integration {}
 }
 
-/// Builds a 3-level tree:
+/// Builds a 3-level tree.
+///
+/// ```
 ///   root(0)
 ///   ├── a(1)
 ///   │   ├── x(10)
 ///   │   └── y(20)
 ///   └── b(2)
 ///       └── z(30)
+/// ```
 private func makeThreeLevelTree() throws -> Tree<Int>.Keyed<String> {
     var tree = Tree<Int>.Keyed<String>()
     let root = try tree.insert(0, at: KeyedInsertPosition.root)

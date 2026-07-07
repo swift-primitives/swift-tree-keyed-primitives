@@ -41,14 +41,18 @@ public enum __TreeKeyedError<Key: Hash.`Protocol`>: Swift.Error {
 // MARK: - CustomStringConvertible
 
 extension __TreeKeyedError: CustomStringConvertible {
+    /// A human-readable description of the error case.
     public var description: String {
         switch self {
         case .invalidPosition:
             return "invalid position"
+
         case .rootOccupied:
             return "root position is already occupied"
+
         case .keyOccupied(let key):
             return "child key '\(key)' is already occupied"
+
         case .cannotRemoveNonLeaf:
             return "cannot remove non-leaf node; use removeSubtree instead"
         }

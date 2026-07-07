@@ -10,8 +10,8 @@
 // ===----------------------------------------------------------------------===//
 
 public import Iterable
-public import Iterator_Primitive
 public import Iterator_Chunk_Primitives
+public import Iterator_Primitive
 public import Sequence_Primitives
 public import Tree_Primitives
 
@@ -38,12 +38,14 @@ extension __TreeKeyedOrder.Pre {
 // `Iterator` does not resolve to `Self.Iterator` (the associated type being defined).
 
 extension __TreeKeyedOrder.Pre.Sequence: Iterable where S.Element: Copyable {
-    @_implements(Iterable, Iterator)
+    /// The multipass borrowing iterator for pre-order traversal.
+    @_implements(Iterable,Iterator)
     public typealias IterableIterator =
         Iterator_Primitive.Iterator.Materializing<__TreeKeyedOrder.Pre.Iterator<S>>
 
+    /// Returns a borrowing iterator over the tree in pre-order.
     @_lifetime(borrow self)
-    @_implements(Iterable, makeIterator())
+    @_implements(Iterable,makeIterator())
     public borrowing func iterableMakeIterator()
         -> Iterator_Primitive.Iterator.Materializing<__TreeKeyedOrder.Pre.Iterator<S>>
     {
@@ -54,9 +56,11 @@ extension __TreeKeyedOrder.Pre.Sequence: Iterable where S.Element: Copyable {
 // MARK: - Sequenceable (single-pass, consuming)
 
 extension __TreeKeyedOrder.Pre.Sequence: Sequenceable where S.Element: Copyable {
-    @_implements(Sequenceable, Iterator)
+    /// The consuming iterator for pre-order traversal.
+    @_implements(Sequenceable,Iterator)
     public typealias SequenceableIterator = __TreeKeyedOrder.Pre.Iterator<S>
 
+    /// Consumes this sequence, yielding an iterator over the tree in pre-order.
     public consuming func makeIterator() -> __TreeKeyedOrder.Pre.Iterator<S> {
         __TreeKeyedOrder.Pre.Iterator<S>(tree: tree)
     }

@@ -9,15 +9,15 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import Store_Primitive
-public import Storage_Generational_Primitives
-public import Ownership_Shared_Primitive
-public import Column_Primitives
 public import Buffer_Ring_Primitive
-public import Queue_Primitives
-public import Tree_Primitives
+public import Column_Primitives
 internal import Iterator_Primitive
 internal import Iterator_Protocol
+public import Ownership_Shared_Primitive
+public import Queue_Primitives
+public import Storage_Generational_Primitives
+public import Store_Primitive
+public import Tree_Primitives
 
 extension __TreeKeyedOrder.Level {
 
@@ -42,11 +42,12 @@ extension __TreeKeyedOrder.Level {
             }
         }
 
+        /// Advances to the next node in level-order (breadth-first, children in
+        /// insertion order), or returns `nil` when traversal is exhausted.
         @inlinable
         public mutating func next() -> S.Element? {
-            guard !pending.isEmpty else { return nil }
+            guard let handle = pending.dequeue() else { return nil }
 
-            let handle = pending.dequeue()!
             let value = tree._value(of: handle)
 
             for (_, child) in tree._children(of: handle) {

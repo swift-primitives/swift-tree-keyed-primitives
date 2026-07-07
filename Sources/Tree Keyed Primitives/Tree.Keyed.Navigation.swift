@@ -51,8 +51,10 @@ extension __Tree where S: __TreeKeyedStorage {
     }
 
     /// Calls the given closure for each child of the node at the given position,
-    /// in insertion order, passing each child's key and position. (Closure overload
-    /// of ``children(of:)`` — R1 W4 [API-NAME-002] de-compounding of `forEachChild`.)
+    /// in insertion order, passing each child's key and position.
+    ///
+    /// (Closure overload of ``children(of:)`` — R1 W4 [API-NAME-002] de-compounding
+    /// of `forEachChild`.)
     ///
     /// - Parameters:
     ///   - position: The position of the parent node.
