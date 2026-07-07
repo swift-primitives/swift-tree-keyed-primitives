@@ -1120,9 +1120,6 @@ extension TreeKeyedTests.Unit {
     /// alias made `Tree<E>.Keyed<K>.Error` resolve to `__TreeError`; this probe would not
     /// have compiled then (the keyed `.keyOccupied` case does not exist on `__TreeError`).
     @Test
-    // The word "Error" below is part of a backtick-quoted TEST NAME, not a type
-    // reference — known false-positive position for the bare-Error text scan.
-    // swiftlint:disable:next swift_error_qualification
     func `P4 Error flows from the column and resolves per instantiation`() {
         // (1) Compile-time identity: the dynamic door's Error is the shared __TreeError
         //     (the associatedtype DEFAULT witness).
