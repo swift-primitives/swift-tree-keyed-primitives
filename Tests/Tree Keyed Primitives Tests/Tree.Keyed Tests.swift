@@ -24,7 +24,7 @@ private typealias KeyedInsertPosition = Tree<Int>.Keyed<String>.Insert.Position
 // MARK: - Tree.Keyed Tests (Parallel Namespace per [TEST-004])
 
 @Suite
-struct `Tree.Keyed` {
+struct `Tree.Keyed Tests` {
     @Suite struct Unit {}
     @Suite struct `Edge Case` {}
     @Suite struct Integration {}
@@ -33,7 +33,7 @@ struct `Tree.Keyed` {
 
 // MARK: - Unit Tests
 
-extension `Tree.Keyed`.Unit {
+extension `Tree.Keyed Tests`.Unit {
 
     // MARK: - Initialization
 
@@ -409,7 +409,7 @@ extension `Tree.Keyed`.Unit {
 
 // MARK: - Helpers
 
-extension `Tree.Keyed`.Unit {
+extension `Tree.Keyed Tests`.Unit {
 
     /// Builds a test tree.
     ///
@@ -433,7 +433,7 @@ extension `Tree.Keyed`.Unit {
 
 // MARK: - Edge Case Tests
 
-extension `Tree.Keyed`.`Edge Case` {
+extension `Tree.Keyed Tests`.`Edge Case` {
 
     @Test
     func `insert throws rootOccupied when root already exists`() throws {
@@ -564,7 +564,7 @@ extension `Tree.Keyed`.`Edge Case` {
 
 // MARK: - Integration Tests
 
-extension `Tree.Keyed`.Integration {
+extension `Tree.Keyed Tests`.Integration {
 
     @Test
     func `copy-on-write preserves original after mutation of copy`() throws {
@@ -700,7 +700,7 @@ private func makeGraphParityTree() throws -> Tree<Int>.Keyed<String> {
 
 // MARK: - Unit Tests (Graph-Parity)
 
-extension `Tree.Keyed`.Unit {
+extension `Tree.Keyed Tests`.Unit {
 
     // MARK: forEach
 
@@ -814,7 +814,7 @@ extension `Tree.Keyed`.Unit {
 
 // MARK: - Edge Case Tests (Graph-Parity)
 
-extension `Tree.Keyed`.`Edge Case` {
+extension `Tree.Keyed Tests`.`Edge Case` {
 
     @Test
     func `forEach on empty tree does not call body`() {
@@ -874,7 +874,7 @@ extension `Tree.Keyed`.`Edge Case` {
 
 // MARK: - Integration Tests (Graph-Parity)
 
-extension `Tree.Keyed`.Integration {
+extension `Tree.Keyed Tests`.Integration {
 
     @Test
     func `forEach async visits all nodes with correct key paths`() async throws {
@@ -913,7 +913,7 @@ extension `Tree.Keyed`.Integration {
 
 // MARK: - Unit Tests (Structural APIs)
 
-extension `Tree.Keyed`.Unit {
+extension `Tree.Keyed Tests`.Unit {
 
     // MARK: init(rootValue:)
 
@@ -1003,7 +1003,7 @@ extension `Tree.Keyed`.Unit {
 
 // MARK: - Edge Case Tests (Structural APIs)
 
-extension `Tree.Keyed`.`Edge Case` {
+extension `Tree.Keyed Tests`.`Edge Case` {
 
     @Test
     func `read-only subscript returns nil for missing path`() {
@@ -1060,7 +1060,7 @@ extension `Tree.Keyed`.`Edge Case` {
 
 // MARK: - Integration Tests (Structural APIs)
 
-extension `Tree.Keyed`.Integration {
+extension `Tree.Keyed Tests`.Integration {
 
     @Test
     func `sparse graph workflow matches Graph usage pattern`() {
@@ -1108,7 +1108,7 @@ extension `Tree.Keyed`.Integration {
 
 // MARK: - P4 per-instantiation Error resolution probe (S.Error flow-through)
 
-extension `Tree.Keyed`.Unit {
+extension `Tree.Keyed Tests`.Unit {
 
     /// Proves the P4 (2026-07-06, re-ruled) S.Error flow-through resolves the two doors'
     /// errors DISTINCTLY by column substitution: the carrier's single

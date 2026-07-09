@@ -8,7 +8,7 @@ import Tree_Primitives_Test_Support
 private typealias KeyedInsertPosition = Tree<Int>.Keyed<String>.Insert.Position
 
 @Suite
-struct `Tree.Keyed.Diff` {
+struct `Tree.Keyed.Diff Tests` {
     @Suite struct Unit {}
     @Suite struct Integration {}
 }
@@ -34,7 +34,7 @@ private func makeThreeLevelTree() throws -> Tree<Int>.Keyed<String> {
     return tree
 }
 
-extension `Tree.Keyed.Diff`.Unit {
+extension `Tree.Keyed.Diff Tests`.Unit {
 
     @Test func `diff of two empty trees is empty`() {
         let old = Tree<Int>.Keyed<String>()
@@ -133,7 +133,7 @@ extension `Tree.Keyed.Diff`.Unit {
     }
 }
 
-extension `Tree.Keyed.Diff`.Integration {
+extension `Tree.Keyed.Diff Tests`.Integration {
 
     @Test func `diff detects nested changes at depth`() throws {
         let old = try makeThreeLevelTree()
