@@ -7,8 +7,8 @@ import Tree_Primitives_Test_Support
 // bare `.root` literal is ambiguous between the keyed and shared insert overloads.
 private typealias KeyedInsertPosition = Tree<Int>.Keyed<String>.Insert.Position
 
-@Suite("Tree.Keyed.Diff")
-struct TreeKeyedDiffTests {
+@Suite
+struct `Tree.Keyed.Diff` {
     @Suite struct Unit {}
     @Suite struct Integration {}
 }
@@ -34,7 +34,7 @@ private func makeThreeLevelTree() throws -> Tree<Int>.Keyed<String> {
     return tree
 }
 
-extension TreeKeyedDiffTests.Unit {
+extension `Tree.Keyed.Diff`.Unit {
 
     @Test func `diff of two empty trees is empty`() {
         let old = Tree<Int>.Keyed<String>()
@@ -133,7 +133,7 @@ extension TreeKeyedDiffTests.Unit {
     }
 }
 
-extension TreeKeyedDiffTests.Integration {
+extension `Tree.Keyed.Diff`.Integration {
 
     @Test func `diff detects nested changes at depth`() throws {
         let old = try makeThreeLevelTree()

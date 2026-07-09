@@ -62,7 +62,7 @@ struct __TreeKeyedLinks<Key: Hash.`Protocol`> {
     /// The arena's per-node seed; the parent key is set by `_linkChild`'s both-sides
     /// invariant when the node is linked.
     @inlinable
-    init() {
+    package init() {
         self.children = Children()
         self.parentKey = nil
     }

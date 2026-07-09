@@ -40,19 +40,19 @@ extension __Tree where S: __TreeKeyedStorage {
 
     /// The parent handle of a node (`nil` for the root).
     @inlinable
-    func _parentHandle(of handle: Store.Generational.Handle) -> Store.Generational.Handle? {
+    package func _parentHandle(of handle: Store.Generational.Handle) -> Store.Generational.Handle? {
         _storage._parentHandle(of: handle)
     }
 
     /// The key under which a node is stored in its parent (`nil` for the root).
     @inlinable
-    func _parentKey(of handle: Store.Generational.Handle) -> Key? {
+    package func _parentKey(of handle: Store.Generational.Handle) -> Key? {
         _storage._parentKey(of: handle)
     }
 
     /// A node's children as ordered `(key, handle)` pairs, in insertion order.
     @inlinable
-    func _children(
+    package func _children(
         of handle: Store.Generational.Handle
     ) -> [(key: Key, handle: Store.Generational.Handle)] {
         _storage._children(of: handle)
@@ -60,7 +60,7 @@ extension __Tree where S: __TreeKeyedStorage {
 
     /// The child handle under `key`, or `nil` if absent.
     @inlinable
-    func _childHandle(
+    package func _childHandle(
         of handle: Store.Generational.Handle,
         key: Key
     ) -> Store.Generational.Handle? {
@@ -69,7 +69,7 @@ extension __Tree where S: __TreeKeyedStorage {
 
     /// Inserts a childless node with the given parent; returns its handle.
     @inlinable
-    mutating func _insertNode(
+    package mutating func _insertNode(
         _ value: consuming Value,
         parent: Store.Generational.Handle?
     ) -> Store.Generational.Handle {
@@ -78,7 +78,7 @@ extension __Tree where S: __TreeKeyedStorage {
 
     /// Links `child` under `parent` at `key` (precondition: `key` is free).
     @inlinable
-    mutating func _linkChild(
+    package mutating func _linkChild(
         _ child: Store.Generational.Handle,
         to parent: Store.Generational.Handle,
         at key: Key
@@ -93,13 +93,13 @@ extension __Tree where S: __TreeKeyedStorage, S.Element: Copyable {
 
     /// The value at a live handle.
     @inlinable
-    func _value(of handle: Store.Generational.Handle) -> Value {
+    package func _value(of handle: Store.Generational.Handle) -> Value {
         _storage._withElement(at: handle) { $0 }
     }
 
     /// Replaces the value at a live handle in place (position-stable).
     @inlinable
-    mutating func _setValue(at handle: Store.Generational.Handle, _ value: Value) {
+    package mutating func _setValue(at handle: Store.Generational.Handle, _ value: Value) {
         _storage._withElementMut(at: handle) { $0 = value }
     }
 }

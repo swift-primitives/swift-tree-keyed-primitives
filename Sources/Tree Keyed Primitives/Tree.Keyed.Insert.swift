@@ -63,14 +63,14 @@ extension __Tree where S: __TreeKeyedStorage {
     ) throws(Self.Error) -> Position {
         switch position {
         case .root:
-            do {
+            do throws(__TreeError) {
                 return try insert(value, at: __TreeInsertPosition<Key>.root)
             } catch {
                 throw Self._map(error)
             }
 
         case .child(of: let parent, let key):
-            do {
+            do throws(__TreeError) {
                 return try insert(value, at: __TreeInsertPosition<Key>.child(of: parent, at: key))
             } catch {
                 throw Self._map(error, key: key)
@@ -81,7 +81,7 @@ extension __Tree where S: __TreeKeyedStorage {
     /// Translates a shared `__TreeError` into the richer keyed error, re-attaching the
     /// key for the occupied-child case. `.slotOccupied` only arises on the `.child` path.
     @inlinable
-    static func _map(_ error: __TreeError, key: Key? = nil) -> __TreeKeyedError<Key> {
+    package static func _map(_ error: __TreeError, key: Key? = nil) -> __TreeKeyedError<Key> {
         switch error {
         case .slotOccupied: return key.map { .keyOccupied($0) } ?? .invalidPosition
         case .rootOccupied: return .rootOccupied
