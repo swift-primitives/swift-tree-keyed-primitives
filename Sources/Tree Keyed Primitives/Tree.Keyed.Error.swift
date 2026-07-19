@@ -34,7 +34,9 @@ public enum __TreeKeyedError<Key: Hash.`Protocol`>: Swift.Error {
     /// The specified child key is already occupied at the given parent.
     case keyOccupied(Key)
 
-    /// Cannot remove a node that has children. Use `removeSubtree` instead.
+    /// Cannot remove a node that has children.
+    ///
+    /// Use `removeSubtree` instead.
     case cannotRemoveNonLeaf
 }
 
