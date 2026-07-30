@@ -51,7 +51,9 @@ extension __TreeKeyedDiff: Equatable where Key: Equatable {}
 
 // MARK: - Typealias
 
-extension __Tree where S: __TreeKeyedStorage, S.Element: Equatable {
+// `Equatable` no longer implies `Copyable` as of the 6.4 stdlib — kept aligned with
+// `Tree.Keyed.Diff.compare.swift`'s identical shape. See swift-tree-keyed-primitives#1.
+extension __Tree where S: __TreeKeyedStorage, S.Element: Equatable & Copyable {
     /// The result of comparing two keyed trees.
     public typealias Diff = __TreeKeyedDiff<Key, Value>
 }

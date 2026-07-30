@@ -9,7 +9,10 @@
 //
 // ===----------------------------------------------------------------------===//
 
-extension __Tree where S: __TreeKeyedStorage, S.Element: Equatable {
+// `Equatable` no longer implies `Copyable` as of the 6.4 stdlib — this extension's
+// bodies call members requiring `Copyable` (`peek(at:)`, `_collectSubtree`), so the
+// constraint is explicit rather than redundant. See swift-tree-keyed-primitives#1.
+extension __Tree where S: __TreeKeyedStorage, S.Element: Equatable & Copyable {
     /// Top-down keyed comparison — walks both trees in parallel by key.
     ///
     /// Produces a diff describing all structural and value changes between
