@@ -79,7 +79,9 @@ extension __Tree where S: __TreeKeyedStorage {
     }
 
     /// Translates a shared `__TreeError` into the richer keyed error, re-attaching the
-    /// key for the occupied-child case. `.slotOccupied` only arises on the `.child` path.
+    /// key for the occupied-child case.
+    ///
+    /// `.slotOccupied` only arises on the `.child` path.
     @inlinable
     package static func _map(_ error: __TreeError, key: Key? = nil) -> __TreeKeyedError<Key> {
         switch error {
